@@ -9,6 +9,13 @@
   "devDependencies": {
     "nw-vue-devtools": "^1.1.1"
   },
+  "window": {
+    "title": "Load Cell",
+    "frame": true,
+    "width": 800,
+    "height": 500,
+    "position": "center"
+  },
   "scripts": {
     "start": "nw ."
   }
