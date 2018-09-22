@@ -1,13 +1,14 @@
 {
-  "name": "loadCell2",
+  "name": "load-cell-2",
   "version": "1.0.0",
   "dependencies": {
     "serialport": "^7.0.2"
   },
   "main": "index.html",
-  "chromium-args": "--load-extension='./node_modules/nw-vue-devtools/extension'",
   "devDependencies": {
-    "nw-vue-devtools": "^1.1.1"
+    "nw-builder": "^3.5.4",
+    "nw-vue-devtools": "^1.1.1",
+    "nwjs-builder-phoenix": "^1.14.8"
   },
   "window": {
     "title": "Load Cell",
@@ -17,6 +18,10 @@
     "position": "center"
   },
   "scripts": {
+    "dist": "build --tasks linux-x86 --mirror https://dl.nwjs.io/ .",
     "start": "nw ."
+  },
+  "build": {
+    "nwVersion": "0.33.0"
   }
 }

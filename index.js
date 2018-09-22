@@ -1,6 +1,6 @@
 nw.Window.get().showDevTools()
 
-const SerialPort = require('serialport'); //chart.series[0].addPoint([(new Date()).getTime(), parseFloat(sData)], true, false)
+const SerialPort = require('serialport');
 const ReadLine = SerialPort.parsers.Readline;
 let reconnectTimer
 
@@ -30,7 +30,7 @@ function connect() {
 
             parser.on('data', function (sData) {
                 if (data.record)
-                    chart.series[0].addPoint([(new Date()).getTime(), parseFloat(sData)], true, false)
+                    chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(sData)], true, false)
             });
 
             port.on('close', function (u) {
@@ -50,10 +50,9 @@ function connect() {
 }
 
 
-
-
 let data = {
-    record: false
+    record: false,
+    zeroValue: Date.now()
 }
 
 let vue = new Vue({
@@ -61,8 +60,14 @@ let vue = new Vue({
     data,
     methods: {
         clear() {
+            zeroValue = Date.now()
             chart.series[0].setData([]);
             chart.redraw();
+        },
+        recordData() {
+            if (chart.series[0].data.length === 0)
+                this.zeroValue = Date.now()
+            this.record = !this.record
         }
     }
 })
@@ -76,28 +81,22 @@ let chart = Highcharts.chart('container', {
     chart: {
         type: 'spline',
         animation: false,
-        marginRight: 10,
-        // events: {
-        //     load: function () {
-        //         let socket = io();
-        //         socket.on('data', sData => {
-        //             if (data.record)
-        //                 chart.series[0].addPoint([(new Date()).getTime(), parseFloat(sData)], true, false)
-        //         });
-        //     }
-        // }
+        marginRight: 10
     },
     title: {
         text: 'მონაცემები'
     },
     xAxis: {
-        type: 'datetime',
+        min: 0,
+        softMax: 6000,
         tickPixelInterval: 150
     },
     yAxis: {
         title: {
             text: 'Value'
         },
+        min: -5,
+        max: 40,
         plotLines: [{
             value: 0,
             width: 1,
@@ -113,8 +112,15 @@ let chart = Highcharts.chart('container', {
     },
     tooltip: {
         formatter: function () {
+            const date = new Date(this.x);
+            let str = '';
+            str += date.getUTCDate()-1 + " დღე, ";
+            str += date.getUTCHours() + " საათი, ";
+            str += date.getUTCMinutes() + " წუთი, ";
+            str += date.getUTCSeconds() + " წამი, ";
+            str += date.getUTCMilliseconds() + " მილიწამი";
             return '<b>' + this.series.name + '</b><br/>' +
-                Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                str + '<br/>' +
                 Highcharts.numberFormat(this.y, 2);
         }
     },
