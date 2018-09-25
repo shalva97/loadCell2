@@ -3,6 +3,7 @@ nw.Window.get().showDevTools()
 const SerialPort = require('serialport');
 const ReadLine = SerialPort.parsers.Readline;
 let reconnectTimer
+let port
 
 connect()
 function connect() {
@@ -17,7 +18,7 @@ function connect() {
             return
         }
 
-        const port = new SerialPort(f[0].comName, {
+        port = new SerialPort(f[0].comName, {
             baudRate: 9600
         });
 
@@ -60,14 +61,43 @@ let vue = new Vue({
     data,
     methods: {
         clear() {
-            zeroValue = Date.now()
-            chart.series[0].setData([]);
-            chart.redraw();
+
         },
         recordData() {
             if (chart.series[0].data.length === 0)
                 this.zeroValue = Date.now()
             this.record = !this.record
+        },
+
+        start() {
+            port.write("s500\n", () => port.write("start\n"))
+        },
+
+        stop() {
+            port.write("stop\n")
+            zeroValue = Date.now()
+            chart.series[0].setData([]);
+            chart.redraw();
+        },
+
+        pause() {
+            port.write("pause\n")
+        },
+
+        resume() {
+            port.write("start\n")
+        },
+
+        up() {
+
+        },
+
+        down() {
+
+        },
+
+        chooseSpeed() {
+
         }
     }
 })

@@ -10,17 +10,28 @@
 </head>
 <body>
 <div id="app">
-    <button @click="recordData">{{ record ? "გაჩერება" : "მონაცემების ჩაწერა"}}</button>
-    <button @click="clear">გასუფთავება</button>
-    <button>დაწყება</button>
-    <button>გაჩერება</button>
-    <button>გაგრდზელება</button>
-    <button>მაღლა</button>
-    <button>დაბლა</button>
-    <label> სიჩქარე:
-        <input type="text">
-    </label>
-    <button>სიჩქარის არჩევა</button>
+    <div>
+        <button @click="recordData">{{ record ? "გაჩერება" : "მონაცემების ჩაწერა"}}</button>
+        <button @click="clear">გასუფთავება</button>
+        <button @click="start">დაწყება</button>
+        <button @click="stop">გაჩერება</button>
+        <button @click="resume">გაგრდზელება</button>
+        <button @click="pause">პაუზა</button>
+        <label style="margin-left: 10px;"> სიჩქარე:
+            <input type="text">
+        </label>
+        <button @click="chooseSpeed">სიჩქარის არჩევა</button>
+    </div>
+    <div style="margin-top: 8px;">
+        <div>
+            <button @click="up"><img src="img/up.png" style="width:50px; height: 12px;"/></button>
+            <br>
+            <button @click="down"><img src="img/down.png" style="width:50px; height: 12px;"/></button>
+        </div>
+
+
+    </div>
+
 </div>
 <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
 <script src="index.js"></script>
