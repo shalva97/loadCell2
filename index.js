@@ -1,4 +1,11 @@
 nw.Window.get().showDevTools()
+window.Vue.use(VuejsDialog.main.default, {
+    html: true,
+    loader: false,
+    okText: 'გაგრძელება',
+    cancelText: 'გაუქმება',
+    animation: 'bounce',
+})
 
 const SerialPort = require('serialport');
 const ReadLine = SerialPort.parsers.Readline;
@@ -6,6 +13,7 @@ let reconnectTimer
 let port
 
 connect()
+
 function connect() {
     SerialPort.list().then(list => {
         let f = list.filter(item => {
@@ -56,29 +64,28 @@ let data = {
     zeroValue: Date.now()
 }
 
+
 let vue = new Vue({
     el: "#app",
     data,
     methods: {
-        clear() {
-
-        },
-        recordData() {
-            if (chart.series[0].data.length === 0)
-                this.zeroValue = Date.now()
-            this.record = !this.record
-        },
-
         start() {
-            port.write("s500\n", () => port.write("start\n"))
+            zeroValue = Date.now()
+            this.record = true
+            port.write("start\n")
         },
 
         stop() {
-            port.write("stop\n")
-            zeroValue = Date.now()
-            chart.series[0].setData([]);
-            chart.redraw();
-        },
+            // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
+            this.$dialog.confirm('განულდება მოწყობილობა და ჩაწერილი მონაცემები. გთხოვთ დაადასტუროთ')
+                .then(function (dialog) {
+                    port.write("stop\n")
+                    chart.series[0].setData([]);
+                    chart.redraw();
+                    data.record = false
+                })
+                .catch(function () {});
+            },
 
         pause() {
             port.write("pause\n")
@@ -94,19 +101,10 @@ let vue = new Vue({
 
         down() {
 
-        },
-
-        chooseSpeed() {
-
         }
     }
 })
 
-Highcharts.setOptions({
-    global: {
-        useUTC: false
-    }
-});
 let chart = Highcharts.chart('container', {
     chart: {
         type: 'spline',
@@ -144,7 +142,7 @@ let chart = Highcharts.chart('container', {
         formatter: function () {
             const date = new Date(this.x);
             let str = '';
-            str += date.getUTCDate()-1 + " დღე, ";
+            str += date.getUTCDate() - 1 + " დღე, ";
             str += date.getUTCHours() + " საათი, ";
             str += date.getUTCMinutes() + " წუთი, ";
             str += date.getUTCSeconds() + " წამი, ";
