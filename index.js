@@ -73,6 +73,7 @@ let vue = new Vue({
             this.zeroValue = Date.now()
             port.write("start\n")
             this.record = true
+            console.log("asdf")
         },
 
         stop() {
