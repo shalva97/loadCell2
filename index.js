@@ -70,9 +70,9 @@ let vue = new Vue({
     data,
     methods: {
         start() {
-            zeroValue = Date.now()
-            this.record = true
+            this.zeroValue = Date.now()
             port.write("start\n")
+            this.record = true
         },
 
         stop() {
@@ -116,7 +116,7 @@ let chart = Highcharts.chart('container', {
     },
     xAxis: {
         min: 0,
-        softMax: 6000,
+        softMax: 12000,
         tickPixelInterval: 150
     },
     yAxis: {
