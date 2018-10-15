@@ -73,7 +73,6 @@ let vue = new Vue({
             this.zeroValue = Date.now()
             port.write("start\n")
             this.record = true
-            console.log("asdf")
         },
 
         stop() {
@@ -106,11 +105,18 @@ let vue = new Vue({
     }
 })
 
+Highcharts.setOptions({
+    lang: {
+        resetZoom: "უკან დაბრუნება"
+    }
+});
+
 let chart = Highcharts.chart('container', {
     chart: {
         type: 'spline',
         animation: false,
-        marginRight: 10
+        marginRight: 10,
+        zoomType: "x"
     },
     title: {
         text: 'მონაცემები'
