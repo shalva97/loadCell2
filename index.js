@@ -1,11 +1,5 @@
+//ts-check
 nw.Window.get().showDevTools()
-window.Vue.use(VuejsDialog.main.default, {
-    html: true,
-    loader: false,
-    okText: 'გაგრძელება',
-    cancelText: 'გაუქმება',
-    animation: 'bounce',
-})
 
 const SerialPort = require('serialport');
 const ReadLine = SerialPort.parsers.Readline;
@@ -64,8 +58,15 @@ let data = {
     zeroValue: Date.now()
 }
 
+window.Vue.use(VuejsDialog.main.default, {
+    html: true,
+    loader: false,
+    okText: 'კი',
+    cancelText: 'არა',
+    animation: 'bounce',
+})
 
-let vue = new Vue({
+new Vue({
     el: "#app",
     data,
     methods: {
@@ -77,7 +78,7 @@ let vue = new Vue({
 
         stop() {
             // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
-            this.$dialog.confirm('განულდება მოწყობილობა და ჩაწერილი მონაცემები. გთხოვთ დაადასტუროთ')
+            this.$dialog.confirm('განულდება მოწყობილობა და ჩაწერილი მონაცემები')
                 .then(function (dialog) {
                     port.write("stop\n")
                     chart.series[0].setData([]);
