@@ -97,11 +97,11 @@ new Vue({
         },
 
         up() {
-
+            port.write("up\n")
         },
 
         down() {
-
+            port.write("down\n")
         }
     }
 })
