@@ -32,8 +32,12 @@ function connect() {
             })
 
             parser.on('data', function (sData) {
-                if (data.record)
-                    chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(sData)], true, false)
+                if (data.record) {              
+                    if (sData !== 'ok\r'){
+                        console.log(sData)
+                        chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(sData)], true, false)
+                    }
+                }
             });
 
             port.on('close', function (u) {
@@ -55,13 +59,14 @@ function connect() {
 
 let data = {
     record: false,
-    zeroValue: Date.now()
+    zeroValue: Date.now(),
+    isPaused: false
 }
 
 window.Vue.use(VuejsDialog.main.default, {
     html: true,
     loader: false,
-    okText: 'კი',
+    okText: 'დიახ',
     cancelText: 'არა',
     animation: 'bounce',
 })
@@ -71,29 +76,51 @@ new Vue({
     data,
     methods: {
         start() {
-            this.zeroValue = Date.now()
-            port.write("start\n")
-            this.record = true
+            this.$dialog.confirm('გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება')
+                .then((dialog) => {
+                    port.write("start\n")
+                    this.zeroValue = Date.now()
+                    this.record = true
+                    chart.series[0].setData([]);
+                    chart.redraw();
+                })
+                .catch((e) => { })
         },
 
         stop() {
             // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
-            this.$dialog.confirm('განულდება მოწყობილობა და ჩაწერილი მონაცემები')
-                .then(function (dialog) {
-                    port.write("stop\n")
-                    chart.series[0].setData([]);
-                    chart.redraw();
-                    data.record = false
-                })
-                .catch(function () {});
-            },
+            this.$dialog.confirm('გსურთ ექსპერიმენტის დასრულება?')
+                .then((dialog) => {
+                    port.write("stop\n", err => {
+                        if (err) {
+                            return console.log('Error on write: ', err.message);
+                        }
+                        data.record = false
+                        this.$dialog.alert('გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება არსებული მონაცემები')
+                    })
 
-        pause() {
-            port.write("pause\n")
+
+                })
+                .catch(function () { });
         },
 
-        resume() {
-            port.write("start\n")
+        handlePause() {
+            if (data.isPaused) {
+                port.write("start\n", function (err) {
+                    if (err) {
+                        return console.log('Error on write: ', err.message);
+                    }
+                    data.isPaused = false
+                })
+            } else {
+                port.write("pause\n", function (err) {
+                    if (err) {
+                        return console.log('Error on write: ', err.message);
+                    }
+                    data.isPaused = true
+                })
+            }
+
         },
 
         up() {

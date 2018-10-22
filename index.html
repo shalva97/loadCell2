@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>load cell</title>
+    <title>load cell project 2</title>
     <script src="fe-scripts/vue.js"></script>
     <script src="fe-scripts/highcharts.js"></script>
     <script src="fe-scripts/exporting.js"></script>
@@ -14,8 +14,8 @@
 <div id="app">
     <div>
         <button @click="start" :disabled="record">დაწყება</button>
-        <button @click="stop">განულება</button>
-        <button @click="pause">გაჩერება</button>
+        <button @click="handlePause" :disabled="!record">{{ isPaused ? 'გაგრძელება' : 'პაუზა' }}</button>
+        <button @click="stop ":disabled="!record">დასრულება</button>
     </div>
     <div style="margin-top: 8px;">
         <div>
