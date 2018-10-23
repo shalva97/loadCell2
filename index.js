@@ -32,10 +32,16 @@ function connect() {
             })
 
             parser.on('data', function (sData) {
-                if (data.record) {              
-                    if (sData !== 'ok\r'){
-                        console.log(sData)
-                        chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(sData)], true, false)
+                if (data.record) {
+                    if (sData !== 'ok\r') {
+                        let loadCellValue = parseFloat(sData)
+                        if (threshold > loadCellValue)
+                            port.write("pause\n", (err) => {
+                                if (err) {
+                                    return console.log('Error on write: ', err.message);
+                                }
+                                chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(sData)], true, false)
+                            })
                     }
                 }
             });
@@ -60,7 +66,8 @@ function connect() {
 let data = {
     record: false,
     zeroValue: Date.now(),
-    isPaused: false
+    isPaused: false,
+    threshold: 500
 }
 
 window.Vue.use(VuejsDialog.main.default, {
@@ -77,7 +84,7 @@ new Vue({
     methods: {
         start() {
             this.$dialog.confirm('გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება')
-                .then((dialog) => {
+                .then(() => {
                     port.write("start\n")
                     this.zeroValue = Date.now()
                     this.record = true
@@ -90,7 +97,7 @@ new Vue({
         stop() {
             // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
             this.$dialog.confirm('გსურთ ექსპერიმენტის დასრულება?')
-                .then((dialog) => {
+                .then(() => {
                     port.write("stop\n", err => {
                         if (err) {
                             return console.log('Error on write: ', err.message);
