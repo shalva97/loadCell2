@@ -10,6 +10,10 @@
     <script src="fe-scripts/export-data.js"></script>
     <link href="./node_modules/vuejs-dialog/dist/vuejs-dialog.min.css" rel="stylesheet">
     <script type="text/javascript" src="./node_modules/vuejs-dialog/dist/vuejs-dialog.min.js"></script>
+    <!-- <script type="text/javascript" src="./node_modules/vue-multilanguage/dist/index.js"></script>
+    <script type="text/javascript" src="./node_modules/vue-multilanguage/dist/install.js"></script>
+    <script type="text/javascript" src="./node_modules/vue-multilanguage/dist/mixin.js"></script> -->
+    
 </head>
 
 <body>
@@ -19,13 +23,14 @@
             <button @click="handlePause" :disabled="!record">{{ isPaused ? 'გაგრძელება' : 'პაუზა' }}</button>
             <button @click="stop " :disabled="!record">დასრულება</button>
             <span>limit: </span>
-            <input type="text" id="threshold" :disabled="record" v-model="threshold">
-            <button @click="up"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
-            <button @click="down"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
+            <input type="text" id="threshold" v-model="threshold">
+            <button @click="up" :disabled="record"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
+            <button @click="down" :disabled="record"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
+            <!-- <button v-for="lang in $ml.list" :key="lang" @click="$ml.change(lang)" v-text="lang" /> -->
         </div>
         <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
     </div>
-        <script src="index.js"></script>
+    <script src="index.js"></script>
 </body>
 
 </html>
