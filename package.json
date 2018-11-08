@@ -24,6 +24,6 @@
     "start": "nw ."
   },
   "build": {
-    "nwVersion": "0.33.4"
+    "nwVersion": "0.34.1"
   }
 }

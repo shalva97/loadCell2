@@ -32,7 +32,9 @@ function connect() {
                         port.write("pause\n", (err) => {
                             if (err)
                                 return console.log('Error on write: ', err.message);
-                            chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(sData)], true, false);
+                            chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                            chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            //chartEpsilon.series[0].addPoint([parseFloat(loadCellValue), parseFloat(epsilonValue)], true, false); 
                         });
                 }
             });
@@ -53,23 +55,10 @@ let data = {
     record: false,
     zeroValue: Date.now(),
     isPaused: false,
-    threshold: 500
+    threshold: 500,
+    lang: "geo"
 };
-// new MLCreate({
-//     initial: 'english',
-//     save: process.env.NODE_ENV === 'production',
-//     languages: [
-//         new MLanguage('english').create({
-//             title: 'Hello {0}!',
-//             msg: 'english text'
-//         }),
-//         new MLanguage('Georgian').create({
-//             title: 'Oi {0}!',
-//             msg: 'ქარტული ტექსტი'
-//         })
-//     ]
-// })
-// Vue.use(MLInstaller)
+
 Vue.use(VuejsDialog.main.default, {
     html: true,
     loader: false,
@@ -77,32 +66,33 @@ Vue.use(VuejsDialog.main.default, {
     cancelText: 'არა',
     animation: 'bounce',
 });
-new Vue({
+let myVue = new Vue({
     el: "#app",
     data,
     methods: {
         start() {
-            this.$dialog.confirm('გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება')
+            this.$dialog.confirm(this.getWordByLang.startConfirm)
                 .then(() => {
-                port.write("start\n");
-                data.zeroValue = Date.now();
-                data.record = true;
-                chart.series[0].setData([]);
-                chart.redraw();
-            })
+                    port.write("start\n");
+                    data.zeroValue = Date.now();
+                    data.record = true;
+                    chart.series[0].setData([]);
+                    chartEpsilon.series[0].setData([]);
+                    chart.redraw();
+                })
                 .catch(() => { });
         },
         stop() {
             // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
-            this.$dialog.confirm('გსურთ ექსპერიმენტის დასრულება?')
+            this.$dialog.confirm(this.getWordByLang.stopConfirm)
                 .then(() => {
-                port.write("stop\n", (err) => {
-                    if (err)
-                        return console.log('Error on write: ', err.message);
-                    data.record = false;
-                    this.$dialog.alert('გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება არსებული მონაცემები');
-                });
-            })
+                    port.write("stop\n", (err) => {
+                        if (err)
+                            return console.log('Error on write: ', err.message);
+                        data.record = false;
+                        this.$dialog.alert(this.getWordByLang.stopConfirm2);
+                    });
+                })
                 .catch(function () { });
         },
         handlePause() {
@@ -127,6 +117,42 @@ new Vue({
         down() {
             port.write("down\n");
         }
+    },
+    computed: {
+        getWordByLang() {
+            let langs = {
+                okText: ['დიახ', "OK"],
+                cancelText: ['არა', "Cancel"],
+                start: ["დაწყება", "Start"],
+                startConfirm: ["გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება",
+                    "Do you want to start a new experiment? Current data will be lost"],
+                stop: ["დასრულება", "Stop"],
+                stopConfirm: ["გსურთ ექსპერიმენტის დასრულება?",
+                    "Do you want to end the experiment?"],
+                stopConfirm2: ["გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება არსებული მონაცემები",
+                    "Please export recorded data, otherwise it will be lost"],
+                pause: ["პაუზა", "Pause"],
+                continue: ["გაგრძელება", "Continue"],
+                limit: ["ლიმიტი: ", "Limit: "],
+                day: [" დღე ", " days "],
+                hours: [" საათი ", " hours "],
+                minutes: [" წუთი ", " minutes "],
+                seconds: [" წამი ", " seconds "],
+                millis: [" მილიწამი ", " milliseconds "],
+            }
+            function getLanguage(i) {
+                let lang = {};
+                Reflect.ownKeys(langs).forEach(key => {
+                    return lang[key] = langs[key][i]
+                })
+                return lang
+            }
+            if (this.lang === "geo") {
+                return getLanguage(0)
+            } else {
+                return getLanguage(1)
+            }
+        }
     }
 });
 Highcharts.setOptions({
@@ -142,7 +168,7 @@ let chart = Highcharts.chart('container', {
         zoomType: "x"
     },
     title: {
-        text: 'მონაცემები'
+        text: ''
     },
     xAxis: {
         min: 0,
@@ -156,10 +182,10 @@ let chart = Highcharts.chart('container', {
         min: -5,
         max: 40,
         plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
+            value: 0,
+            width: 1,
+            color: '#808080'
+        }]
     },
     plotOptions: {
         series: {
@@ -172,14 +198,12 @@ let chart = Highcharts.chart('container', {
         formatter: function () {
             const date = new Date(this.x);
             let str = '';
-            str += date.getUTCDate() - 1 + " დღე, ";
-            str += date.getUTCHours() + " საათი, ";
-            str += date.getUTCMinutes() + " წუთი, ";
-            str += date.getUTCSeconds() + " წამი, ";
-            str += date.getUTCMilliseconds() + " მილიწამი";
-            return '<b>' + this.series.name + '</b><br/>' +
-                str + '<br/>' +
-                Highcharts.numberFormat(this.y, 2);
+            str += date.getUTCDate() - 1 + myVue.getWordByLang.day;
+            str += date.getUTCHours() + myVue.getWordByLang.hours;
+            str += date.getUTCMinutes() + myVue.getWordByLang.minutes;
+            str += date.getUTCSeconds() + myVue.getWordByLang.seconds;
+            str += date.getUTCMilliseconds() + myVue.getWordByLang.millis;
+            return '<b>' + this.series.name + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
         }
     },
     legend: {
@@ -189,7 +213,66 @@ let chart = Highcharts.chart('container', {
         enabled: true
     },
     series: [{
-            name: 'სენსორის მნიშვნელობა',
-            data: []
+        name: 'Load cell ',
+        data: []
+    }]
+});
+
+let chartEpsilon = Highcharts.chart('containerEpsilon', {
+    chart: {
+        type: 'spline',
+        animation: false,
+        marginRight: 10,
+        zoomType: "x"
+    },
+    title: {
+        text: ''
+    },
+    xAxis: {
+        min: 0,
+        softMax: 12000,
+        tickPixelInterval: 150
+    },
+    yAxis: {
+        title: {
+            text: 'Value'
+        },
+        min: -5,
+        max: 40,
+        plotLines: [{
+            value: 0,
+            width: 1,
+            color: '#808080'
         }]
+    },
+    plotOptions: {
+        series: {
+            marker: {
+                enabled: false
+            },
+            color: "gray"
+        }
+    },
+    tooltip: {
+        formatter: function () {
+            const date = new Date(this.x);
+            let str = '';
+            str += date.getUTCDate() - 1 + myVue.getWordByLang.day;
+            str += date.getUTCHours() + myVue.getWordByLang.hours;
+            str += date.getUTCMinutes() + myVue.getWordByLang.minutes;
+            str += date.getUTCSeconds() + myVue.getWordByLang.seconds;
+            str += date.getUTCMilliseconds() + myVue.getWordByLang.millis;
+            return '<b>' + this.series.name + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
+        }
+    },
+    legend: {
+        enabled: false
+    },
+    exporting: {
+        enabled: true
+    },
+    series: [{
+        name: 'Epsilon ',
+        data: []
+    }]
 });
