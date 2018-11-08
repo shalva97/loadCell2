@@ -10,14 +10,19 @@
     <script src="fe-scripts/export-data.js"></script>
     <link href="./node_modules/vuejs-dialog/dist/vuejs-dialog.min.css" rel="stylesheet">
     <script type="text/javascript" src="./node_modules/vuejs-dialog/dist/vuejs-dialog.min.js"></script>
+    <style>
+        body {
+            background-color: #efefef;
+        }
+    </style>
 </head>
 
 <body>
     <div id="app">
         <div>
-            <button @click="start" :disabled="record">{{ getWordByLang.start }}</button>
+            <button @click="start" :disabled="record || constrollingDCMotorManually">{{ getWordByLang.start }}</button>
             <button @click="handlePause" :disabled="!record">{{ isPaused ? getWordByLang.continue : getWordByLang.pause }}</button>
-            <button @click="stop " :disabled="!record">{{ getWordByLang.stop }}</button>
+            <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">{{ getWordByLang.stop }}</button>
             <span> {{getWordByLang.limit}} </span>
             <input type="text" id="threshold" v-model="threshold">
             <button @click="up" :disabled="record"><img src="img/up.png" style="width:50px; height: 12px;" /></button>

@@ -55,8 +55,9 @@ let data = {
     record: false,
     zeroValue: Date.now(),
     isPaused: false,
-    threshold: 500,
-    lang: "geo"
+    threshold: 3,
+    lang: "geo",
+    constrollingDCMotorManually: false
 };
 
 Vue.use(VuejsDialog.main.default, {
@@ -66,6 +67,8 @@ Vue.use(VuejsDialog.main.default, {
     cancelText: 'არა',
     animation: 'bounce',
 });
+
+
 let myVue = new Vue({
     el: "#app",
     data,
@@ -79,22 +82,33 @@ let myVue = new Vue({
                     chart.series[0].setData([]);
                     chartEpsilon.series[0].setData([]);
                     chart.redraw();
+                    chartEpsilon.redraw();
                 })
                 .catch(() => { });
         },
         stop() {
             // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
-            this.$dialog.confirm(this.getWordByLang.stopConfirm)
-                .then(() => {
-                    port.write("stop\n", (err) => {
-                        if (err)
-                            return console.log('Error on write: ', err.message);
-                        data.record = false;
-                        this.$dialog.alert(this.getWordByLang.stopConfirm2);
-                    });
+            if (!data.constrollingDCMotorManually)
+                this.$dialog.confirm(this.getWordByLang.stopConfirm)
+                    .then(() => {
+                        port.write("stop\n", (err) => {
+                            if (err)
+                                return console.log('Error on write: ', err.message);
+                            data.record = false;
+                            this.$dialog.alert(this.getWordByLang.stopConfirm2);
+                        });
+                    })
+                    .catch(function () { });
+            else
+                port.write("stop\n", err => {
+                    if (err) {
+                        return console.log('Error on write: ', err.message);
+                    }
+                    data.record = false
+                    data.constrollingDCMotorManually = false
                 })
-                .catch(function () { });
         },
+
         handlePause() {
             if (data.isPaused) {
                 port.write("start\n", function (err) {
@@ -102,8 +116,7 @@ let myVue = new Vue({
                         return console.log('Error on write: ', err.message);
                     data.isPaused = false;
                 });
-            }
-            else {
+            } else {
                 port.write("pause\n", function (err) {
                     if (err)
                         return console.log('Error on write: ', err.message);
@@ -113,11 +126,14 @@ let myVue = new Vue({
         },
         up() {
             port.write("up\n");
+            this.constrollingDCMotorManually = true
         },
         down() {
             port.write("down\n");
+            this.constrollingDCMotorManually = true
         }
     },
+    
     computed: {
         getWordByLang() {
             let langs = {
