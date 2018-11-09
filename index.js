@@ -28,14 +28,13 @@ function connect() {
             parser.on('data', function (sData) {
                 let [loadCellValue, epsilonValue] = sData.split("/");
                 if (data.record) {
-                    if (data.threshold > parseFloat(loadCellValue))
+                    if (parseFloat(data.threshold) < parseFloat(loadCellValue))
                         port.write("pause\n", (err) => {
                             if (err)
                                 return console.log('Error on write: ', err.message);
-                            chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
-                            //chartEpsilon.series[0].addPoint([parseFloat(loadCellValue), parseFloat(epsilonValue)], true, false); 
                         });
+                    chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                    chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);``
                 }
             });
             port.on('close', function () {
@@ -133,7 +132,7 @@ let myVue = new Vue({
             this.constrollingDCMotorManually = true
         }
     },
-    
+
     computed: {
         getWordByLang() {
             let langs = {
