@@ -14,26 +14,26 @@
         body {
             background-color: #efefef;
         }
+
+        .chart {
+            border: 3px solid gray;
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
         <div>
-            <button @click="start" :disabled="record || constrollingDCMotorManually">{{ getWordByLang.start }}</button>
-            <button @click="handlePause" :disabled="!record">{{ isPaused ? getWordByLang.continue : getWordByLang.pause }}</button>
-            <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">{{ getWordByLang.stop }}</button>
-            <span> {{getWordByLang.limit}} </span>
+            <button @click="start" :disabled="record || constrollingDCMotorManually">{{ "Start" }}</button>
+            <button @click="handlePause" :disabled="!record">{{ isPaused ? "Resume" : "Pause" }}</button>
+            <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">{{ "stop" }}</button>
+            <span> {{"Limit: "}} </span>
             <input type="text" id="threshold" v-model="threshold">
             <button @click="up" :disabled="record"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
             <button @click="down" :disabled="record"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
-            <select v-model="lang">
-                <option value="geo" selected>ქართული</option>
-                <option value="eng">English</option>
-            </select>
         </div>
-        <div id="container" style="min-width: 310px; height: 300px; margin: 30px auto"></div>
-        <div id="containerEpsilon" style="min-width: 310px; height: 300px; margin: 30px auto"></div>
+        <div id="container" class="chart" style="min-width: 310px; height: 300px; margin: 30px auto"></div>
+        <div id="containerEpsilon" class="chart" style="width: 370px; height: 300px; margin: 30px auto 0 0"></div>
     </div>
     <script src="index.js"></script>
 </body>

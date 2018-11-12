@@ -35,7 +35,7 @@ function connect() {
                         });
                     chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
                     chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);``
-                }
+           }
             });
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
@@ -55,7 +55,6 @@ let data = {
     zeroValue: Date.now(),
     isPaused: false,
     threshold: 3,
-    lang: "geo",
     constrollingDCMotorManually: false
 };
 
@@ -73,7 +72,7 @@ let myVue = new Vue({
     data,
     methods: {
         start() {
-            this.$dialog.confirm(this.getWordByLang.startConfirm)
+            this.$dialog.confirm("გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება")
                 .then(() => {
                     port.write("start\n");
                     data.zeroValue = Date.now();
@@ -88,13 +87,13 @@ let myVue = new Vue({
         stop() {
             // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
             if (!data.constrollingDCMotorManually)
-                this.$dialog.confirm(this.getWordByLang.stopConfirm)
+                this.$dialog.confirm("გსურთ ექსპერიმენტის დასრულება?")
                     .then(() => {
                         port.write("stop\n", (err) => {
                             if (err)
                                 return console.log('Error on write: ', err.message);
                             data.record = false;
-                            this.$dialog.alert(this.getWordByLang.stopConfirm2);
+                            this.$dialog.alert("გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება არსებული მონაცემები");
                         });
                     })
                     .catch(function () { });
@@ -133,42 +132,6 @@ let myVue = new Vue({
         }
     },
 
-    computed: {
-        getWordByLang() {
-            let langs = {
-                okText: ['დიახ', "OK"],
-                cancelText: ['არა', "Cancel"],
-                start: ["დაწყება", "Start"],
-                startConfirm: ["გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება",
-                    "Do you want to start a new experiment? Current data will be lost"],
-                stop: ["დასრულება", "Stop"],
-                stopConfirm: ["გსურთ ექსპერიმენტის დასრულება?",
-                    "Do you want to end the experiment?"],
-                stopConfirm2: ["გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება არსებული მონაცემები",
-                    "Please export recorded data, otherwise it will be lost"],
-                pause: ["პაუზა", "Pause"],
-                continue: ["გაგრძელება", "Continue"],
-                limit: ["ლიმიტი: ", "Limit: "],
-                day: [" დღე ", " days "],
-                hours: [" საათი ", " hours "],
-                minutes: [" წუთი ", " minutes "],
-                seconds: [" წამი ", " seconds "],
-                millis: [" მილიწამი ", " milliseconds "],
-            }
-            function getLanguage(i) {
-                let lang = {};
-                Reflect.ownKeys(langs).forEach(key => {
-                    return lang[key] = langs[key][i]
-                })
-                return lang
-            }
-            if (this.lang === "geo") {
-                return getLanguage(0)
-            } else {
-                return getLanguage(1)
-            }
-        }
-    }
 });
 Highcharts.setOptions({
     lang: {
@@ -192,7 +155,7 @@ let chart = Highcharts.chart('container', {
     },
     yAxis: {
         title: {
-            text: 'Value'
+            text: 'Kg'
         },
         min: -5,
         max: 40,
@@ -213,11 +176,11 @@ let chart = Highcharts.chart('container', {
         formatter: function () {
             const date = new Date(this.x);
             let str = '';
-            str += date.getUTCDate() - 1 + myVue.getWordByLang.day;
-            str += date.getUTCHours() + myVue.getWordByLang.hours;
-            str += date.getUTCMinutes() + myVue.getWordByLang.minutes;
-            str += date.getUTCSeconds() + myVue.getWordByLang.seconds;
-            str += date.getUTCMilliseconds() + myVue.getWordByLang.millis;
+            str += date.getUTCDate() - 1 + ' day ';
+            str += date.getUTCHours() + " hours ";
+            str += date.getUTCMinutes() + " minutes ";
+            str += date.getUTCSeconds() + " seconds ";
+            str += date.getUTCMilliseconds() + " milliseconds ";
             return '<b>' + this.series.name + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
         }
     },
@@ -238,14 +201,14 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
         type: 'spline',
         animation: false,
         marginRight: 10,
-        zoomType: "x"
+        zoomType: "xy"
     },
     title: {
         text: ''
     },
     xAxis: {
-        min: 0,
-        softMax: 12000,
+        min: -5,
+        max: 40,
         tickPixelInterval: 150
     },
     yAxis: {
@@ -272,11 +235,11 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
         formatter: function () {
             const date = new Date(this.x);
             let str = '';
-            str += date.getUTCDate() - 1 + myVue.getWordByLang.day;
-            str += date.getUTCHours() + myVue.getWordByLang.hours;
-            str += date.getUTCMinutes() + myVue.getWordByLang.minutes;
-            str += date.getUTCSeconds() + myVue.getWordByLang.seconds;
-            str += date.getUTCMilliseconds() + myVue.getWordByLang.millis;
+            str += date.getUTCDate() - 1 + ' day ';
+            str += date.getUTCHours() + " hours ";
+            str += date.getUTCMinutes() + " minutes ";
+            str += date.getUTCSeconds() + " seconds ";
+            str += date.getUTCMilliseconds() + " milliseconds ";
             return '<b>' + this.series.name + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
         }
     },
