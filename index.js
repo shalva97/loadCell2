@@ -26,6 +26,19 @@ function connect() {
                 console.log("connection established to device/წარმატებით დავუკავშირდი");
             });
             parser.on('data', function (sData) {
+                switch (sData) {
+                    case "sos1\r":
+                        data.record = false
+                        Vue.dialog.alert("Something broke")
+                        return
+                        break
+                    case "sos2\r":
+                        data.record = false
+                        Vue.dialog.alert("Epsilon reached its limit")
+                        return
+                        break
+                }
+
                 let [loadCellValue, epsilonValue] = sData.split("/");
                 if (data.record) {
                     if (parseFloat(data.threshold) < parseFloat(loadCellValue))
@@ -33,9 +46,19 @@ function connect() {
                             if (err)
                                 return console.log('Error on write: ', err.message);
                         });
-                    chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                    chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);``
-           }
+                    switch (data.experimentType) {
+                        case "kg/epsilon":
+                            chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                            chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            break
+                        case "epsilon":
+                            chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            break
+                        case "kg":
+                            chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                            break
+                    }
+                }
             });
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
@@ -55,7 +78,8 @@ let data = {
     zeroValue: Date.now(),
     isPaused: false,
     threshold: 3,
-    constrollingDCMotorManually: false
+    constrollingDCMotorManually: false,
+    experimentType: "kg/epsilon"
 };
 
 Vue.use(VuejsDialog.main.default, {
@@ -85,7 +109,6 @@ let myVue = new Vue({
                 .catch(() => { });
         },
         stop() {
-            // let shouldDeleteData = confirm('წაიშლება ინფორმაცია და განულდება მოწყობილობის პოზიცია. გთხოვთ დაადასტუროთ')
             if (!data.constrollingDCMotorManually)
                 this.$dialog.confirm("გსურთ ექსპერიმენტის დასრულება?")
                     .then(() => {
@@ -133,11 +156,13 @@ let myVue = new Vue({
     },
 
 });
+
 Highcharts.setOptions({
     lang: {
         resetZoom: "უკან დაბრუნება"
     }
 });
+
 let chart = Highcharts.chart('container', {
     chart: {
         type: 'spline',
@@ -149,6 +174,9 @@ let chart = Highcharts.chart('container', {
         text: ''
     },
     xAxis: {
+        title: {
+            text: 'milliseconds'
+        },
         min: 0,
         softMax: 12000,
         tickPixelInterval: 150
@@ -207,13 +235,16 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
         text: ''
     },
     xAxis: {
+        title: {
+            text: 'kg'
+        },
         min: -5,
         max: 40,
         tickPixelInterval: 150
     },
     yAxis: {
         title: {
-            text: 'Value'
+            text: 'epsilon'
         },
         min: -5,
         max: 40,
