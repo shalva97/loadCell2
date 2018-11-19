@@ -49,10 +49,10 @@ function connect() {
                     switch (data.experimentType) {
                         case "kg/epsilon":
                             chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
                             break
                         case "epsilon":
-                            chartEpsilon.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
                             break
                         case "kg":
                             chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
@@ -96,7 +96,7 @@ let myVue = new Vue({
     data,
     methods: {
         start() {
-            this.$dialog.confirm("გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება")
+            this.$dialog.confirm("გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება.")
                 .then(() => {
                     port.write("start\n");
                     data.zeroValue = Date.now();
@@ -116,7 +116,7 @@ let myVue = new Vue({
                             if (err)
                                 return console.log('Error on write: ', err.message);
                             data.record = false;
-                            this.$dialog.alert("გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება არსებული მონაცემები");
+                            this.$dialog.alert("გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება.");
                         });
                     })
                     .catch(function () { });

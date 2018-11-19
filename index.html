@@ -31,7 +31,7 @@
             <input type="text" id="threshold" v-model="threshold">
             <button @click="up" :disabled="record"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
             <button @click="down" :disabled="record"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
-            <select v-model="experimentType" style="min-width: 70px;">
+            <select v-model="experimentType" style="min-width: 70px;" :disabled="record">
                 <option value="kg/epsilon" selected>&epsilon;/&sigma;</option>
                 <option value="kg">&sigma;</option>
                 <option value="epsilon">&epsilon;</option>
