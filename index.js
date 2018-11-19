@@ -5,7 +5,7 @@ const ReadLine = SerialPort.parsers.Readline;
 let reconnectTimer;
 let port;
 connect();
-function connect() {
+function connect() { 
     SerialPort.list().then((list) => {
         let f = list.filter(item => {
             return String(item.manufacturer).includes('Arduino');
@@ -26,21 +26,22 @@ function connect() {
                 console.log("connection established to device/წარმატებით დავუკავშირდი");
             });
             parser.on('data', function (sData) {
-                switch (sData) {
-                    case "sos1\r":
-                        data.record = false
-                        Vue.dialog.alert("Something broke")
-                        return
-                        break
-                    case "sos2\r":
-                        data.record = false
-                        Vue.dialog.alert("Epsilon reached its limit")
-                        return
-                        break
-                }
 
-                let [loadCellValue, epsilonValue] = sData.split("/");
                 if (data.record) {
+                    switch (sData) {
+                        case "sos2\r":
+                            data.record = false
+                            Vue.dialog.alert("ნიმუში გაწყდა")
+                            return
+                            break
+                        case "sos1\r":
+                            data.record = false
+                            Vue.dialog.alert("ნიმუში გაიწელა 10მმ-ით")
+                            return
+                            break
+                    }
+
+                    let [loadCellValue, epsilonValue] = sData.split("/");
                     if (parseFloat(data.threshold) < parseFloat(loadCellValue))
                         port.write("pause\n", (err) => {
                             if (err)
@@ -49,10 +50,10 @@ function connect() {
                     switch (data.experimentType) {
                         case "kg/epsilon":
                             chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                            chartEpsilon.series[0].addPoint([parseFloat(loadCellValue), parseFloat(epsilonValue)], true, false);
                             break
                         case "epsilon":
-                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                            chartEpsilon.series[0].addPoint([parseFloat(loadCellValue), parseFloat(epsilonValue)], true, false);
                             break
                         case "kg":
                             chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
@@ -238,16 +239,18 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
         title: {
             text: 'kg'
         },
-        min: -5,
-        max: 40,
-        tickPixelInterval: 150
+        min: -1,
+        softMax: 4,
+        tickPixelInterval: 150,
+        tickInterval: 2
     },
     yAxis: {
+        tickInterval: 2,
         title: {
             text: 'epsilon'
         },
-        min: -5,
-        max: 40,
+        min: -2,
+        max: 12,
         plotLines: [{
             value: 0,
             width: 1,
@@ -265,13 +268,8 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
     tooltip: {
         formatter: function () {
             const date = new Date(this.x);
-            let str = '';
-            str += date.getUTCDate() - 1 + ' day ';
-            str += date.getUTCHours() + " hours ";
-            str += date.getUTCMinutes() + " minutes ";
-            str += date.getUTCSeconds() + " seconds ";
-            str += date.getUTCMilliseconds() + " milliseconds ";
-            return '<b>' + this.series.name + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
+            return '<b>Epsilon: ' + this.x + '</b><br/>'
+                + '<b>kg: ' + this.y + '</b>';
         }
     },
     legend: {
