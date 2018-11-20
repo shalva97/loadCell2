@@ -50,10 +50,10 @@ function connect() {
                     switch (data.experimentType) {
                         case "kg/epsilon":
                             chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            chartEpsilon.series[0].addPoint([parseFloat(loadCellValue), parseFloat(epsilonValue)], true, false);
+                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
                             break
                         case "epsilon":
-                            chartEpsilon.series[0].addPoint([parseFloat(loadCellValue), parseFloat(epsilonValue)], true, false);
+                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
                             break
                         case "kg":
                             chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
@@ -99,7 +99,9 @@ let myVue = new Vue({
         start() {
             this.$dialog.confirm("გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება.")
                 .then(() => {
-                    port.write("start\n");
+                    port.write("down\n", () => {
+                        port.write("start\n")
+                    })
                     data.zeroValue = Date.now();
                     data.record = true;
                     chart.series[0].setData([]);
@@ -237,7 +239,7 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
     },
     xAxis: {
         title: {
-            text: 'kg'
+            text: 'epsilon'
         },
         min: -1,
         softMax: 4,
@@ -247,10 +249,10 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
     yAxis: {
         tickInterval: 2,
         title: {
-            text: 'epsilon'
+            text: 'kg'
         },
         min: -2,
-        max: 12,
+        softMax: 2,
         plotLines: [{
             value: 0,
             width: 1,
