@@ -4,6 +4,7 @@ const SerialPort = require("serialport");
 const ReadLine = SerialPort.parsers.Readline;
 let reconnectTimer;
 let port;
+
 connect();
 function connect() { 
     SerialPort.list().then((list) => {
@@ -194,7 +195,8 @@ let chart = Highcharts.chart('container', {
             value: 0,
             width: 1,
             color: '#808080'
-        }]
+        }],
+        gridLineColor: 'gray'
     },
     plotOptions: {
         series: {
@@ -257,14 +259,15 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
             value: 0,
             width: 1,
             color: '#808080'
-        }]
+        }],
+        gridLineColor: 'gray'
     },
     plotOptions: {
         series: {
             marker: {
                 enabled: false
             },
-            color: "gray"
+            color: "red"
         }
     },
     tooltip: {
