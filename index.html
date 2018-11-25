@@ -17,6 +17,7 @@
 
         .chart {
             border: 2px solid gray;
+            min-width: 310px; height: 300px; margin: 30px auto
         }
     </style>
 </head>
@@ -24,23 +25,23 @@
 <body>
     <div id="app">
         <div>
-            <button @click="start" :disabled="record || constrollingDCMotorManually">{{ "Start" }}</button>
+            <button @click="start" :disabled="record || constrollingDCMotorManually">Start</button>
             <button @click="handlePause" :disabled="!record">{{ isPaused ? "Resume" : "Pause" }}</button>
-            <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">{{ "stop" }}</button>
-            <span> {{"limit in kg: "}} </span>
+            <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">stop</button>
+            <span> limit in kg: </span>
             <input type="text" id="threshold" v-model="threshold" style="width: 40px">
-            <span> {{"x: "}} </span>
+            <span> x: </span>
             <input type="text" style="width: 40px">
             <button @click="up" :disabled="record"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
             <button @click="down" :disabled="record"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
-            <select v-model="experimentType" style="min-width: 70px;" :disabled="record">
-                <option value="kg/epsilon" selected>&epsilon;/&sigma;</option>
-                <option value="kg">&sigma;</option>
-                <option value="epsilon">&epsilon;</option>
-            </select>
+
+            <input type="checkbox" v-model="settings[0]" :disabled="record">&epsilon;
+            <input type="checkbox" v-model="settings[1]" :disabled="record">&sigma;
+            <input type="checkbox" v-model="settings[2]" :disabled="record">&epsilon; | &sigma;
         </div>
-        <div id="container" class="chart" style="min-width: 310px; height: 300px; margin: 30px auto" v-show="experimentType === 'kg' || experimentType === 'kg/epsilon'"></div>
-        <div id="containerEpsilon" class="chart" style="min-width: 310px; height: 300px; margin: 30px auto" v-show="experimentType === 'epsilon' || experimentType === 'kg/epsilon'"></div>
+        <div id="sigmaTime" class="chart" v-show="settings[0]"></div>
+        <div id="epsilonTime" class="chart" v-show="settings[1]"></div>
+        <div id="sigmaEpsilon" class="chart" v-show="settings[2]"></div>
     </div>
     <script src="index.js"></script>
 </body>
