@@ -17,7 +17,7 @@
 
         .chart {
             border: 2px solid gray;
-            min-width: 310px; height: 300px; margin: 30px auto
+            min-width: 310px; height: 200px; margin: 30px auto
         }
     </style>
 </head>
@@ -25,7 +25,7 @@
 <body>
     <div id="app">
         <div>
-            <button @click="start" :disabled="record || constrollingDCMotorManually">Start</button>
+            <button @click="start" :disabled="record || constrollingDCMotorManually || !(settings[0] || settings[1] || settings[2])">Start</button>
             <button @click="handlePause" :disabled="!record">{{ isPaused ? "Resume" : "Pause" }}</button>
             <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">stop</button>
             <span> limit in kg: </span>
@@ -35,8 +35,8 @@
             <button @click="up" :disabled="record"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
             <button @click="down" :disabled="record"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
 
-            <input type="checkbox" v-model="settings[0]" :disabled="record">&epsilon;
-            <input type="checkbox" v-model="settings[1]" :disabled="record">&sigma;
+            <input type="checkbox" v-model="settings[0]" :disabled="record">&sigma;
+            <input type="checkbox" v-model="settings[1]" :disabled="record">&epsilon;
             <input type="checkbox" v-model="settings[2]" :disabled="record">&epsilon; | &sigma;
         </div>
         <div id="sigmaTime" class="chart" v-show="settings[0]"></div>

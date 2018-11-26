@@ -48,43 +48,17 @@ function connect() {
                             if (err)
                                 return console.log('Error on write: ', err.message);
                         });
-                    switch (data.settings.join(" ")) {
-                        //epsilonTime
-                        //epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
-                        //sigmaTime
-                        //sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                        //sigmaEpsilon
-                        //sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
-                        //
-                        //epsilon sigma both
-                        case "false false true":
-                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
-                            break
-                        case "false true false":
-                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            break
-                        case "false true true":
-                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
-                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            break
-                        case "true false false":
-                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
-                            break
-                        case "true false true":
-                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
-                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
-                            break
-                        case "true true false":
-                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
-                            break
-                        case "true true true":
-                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
-                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
-                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            break
 
+                    if (data.settings[0]) {
+                        sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
                     }
+                    if (data.settings[1]) {
+                        epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                    }
+                    if (data.settings[2]) {
+                        sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                    }
+
                 }
             });
             port.on('close', function () {
@@ -107,7 +81,7 @@ let data = {
     threshold: 3,
     constrollingDCMotorManually: false,
     experimentType: "kg/epsilon",
-    settings: [false, true, false]
+    settings: [false,false, false]
 };
 
 Vue.use(VuejsDialog.main.default, {
@@ -191,11 +165,6 @@ let myVue = new Vue({
 
 });
 
-Highcharts.setOptions({
-    lang: {
-        resetZoom: "უკან დაბრუნება"
-    }
-});
 
 let sigmaTime = Highcharts.chart('sigmaTime', {
     chart: {
@@ -213,20 +182,21 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
         },
         min: 0,
         softMax: 12000,
-        tickPixelInterval: 150
+        tickPixelInterval: 150        
     },
     yAxis: {
         title: {
-            text: 'sigma'
+            text: 'kg'
         },
         min: -5,
-        max: 40,
+        max: 30,
         plotLines: [{
             value: 0,
             width: 1,
             color: '#808080'
         }],
-        gridLineColor: 'gray'
+        gridLineColor: 'gray',
+        tickInterval: 5
     },
     plotOptions: {
         series: {
@@ -255,7 +225,8 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
     },
     series: [{
         name: 'Load cell ',
-        data: []
+        data: [],
+        color: '#00f'
     }]
 });
 
@@ -274,17 +245,17 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
             text: 'epsilon'
         },
         min: -1,
-        softMax: 4,
+        max: 11,
         tickPixelInterval: 150,
         tickInterval: 2
     },
     yAxis: {
-        tickInterval: 2,
+        tickInterval: 5,
         title: {
             text: 'kg'
         },
-        min: -2,
-        softMax: 2,
+        min: -5,
+        max: 30,
         plotLines: [{
             value: 0,
             width: 1,
@@ -341,21 +312,22 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
         title: {
             text: 'epsilon'
         },
-        min: -5,
-        max: 40,
+        min: -1,
+        max: 11,
         plotLines: [{
             value: 0,
             width: 1,
             color: '#808080'
-        }]
+        }],
+        gridLineColor: 'gray',
+        tickInterval: 2
     },
     plotOptions: {
         series: {
             marker: {
                 enabled: false
             }
-        },
-        color: "green"
+        }        
     },
     tooltip: {
         formatter: function () {
@@ -377,6 +349,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
     },
     series: [{
         name: 'Load cell ',
-        data: []
+        data: [],
+        color: "green"
     }]
 });
