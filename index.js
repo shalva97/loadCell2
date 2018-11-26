@@ -6,7 +6,7 @@ let reconnectTimer;
 let port;
 
 connect();
-function connect() { 
+function connect() {
     SerialPort.list().then((list) => {
         let f = list.filter(item => {
             return String(item.manufacturer).includes('Arduino');
@@ -48,17 +48,42 @@ function connect() {
                             if (err)
                                 return console.log('Error on write: ', err.message);
                         });
-                    switch (data.experimentType) {
-                        case "kg/epsilon":
-                            chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
-                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                    switch (data.settings.join(" ")) {
+                        //epsilonTime
+                        //epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                        //sigmaTime
+                        //sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                        //sigmaEpsilon
+                        //sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                        //
+                        //epsilon sigma both
+                        case "false false true":
+                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
                             break
-                        case "epsilon":
-                            chartEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                        case "false true false":
+                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
                             break
-                        case "kg":
-                            chart.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                        case "false true true":
+                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
                             break
+                        case "true false false":
+                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            break
+                        case "true false true":
+                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            break
+                        case "true true false":
+                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            break
+                        case "true true true":
+                            sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                            epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                            sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                            break
+
                     }
                 }
             });
@@ -81,7 +106,8 @@ let data = {
     isPaused: false,
     threshold: 3,
     constrollingDCMotorManually: false,
-    experimentType: "kg/epsilon"
+    experimentType: "kg/epsilon",
+    settings: [false, true, false]
 };
 
 Vue.use(VuejsDialog.main.default, {
@@ -105,10 +131,14 @@ let myVue = new Vue({
                     })
                     data.zeroValue = Date.now();
                     data.record = true;
-                    chart.series[0].setData([]);
-                    chartEpsilon.series[0].setData([]);
-                    chart.redraw();
-                    chartEpsilon.redraw();
+
+                    sigmaTime.series[0].setData([]);
+                    sigmaEpsilon.series[0].setData([]);
+                    epsilonTime.series[0].setData([]);
+
+                    sigmaTime.redraw();
+                    sigmaEpsilon.redraw();
+                    epsilonTime.redraw();
                 })
                 .catch(() => { });
         },
@@ -167,7 +197,7 @@ Highcharts.setOptions({
     }
 });
 
-let chart = Highcharts.chart('container', {
+let sigmaTime = Highcharts.chart('sigmaTime', {
     chart: {
         type: 'spline',
         animation: false,
@@ -187,7 +217,7 @@ let chart = Highcharts.chart('container', {
     },
     yAxis: {
         title: {
-            text: 'Kg'
+            text: 'sigma'
         },
         min: -5,
         max: 40,
@@ -229,7 +259,7 @@ let chart = Highcharts.chart('container', {
     }]
 });
 
-let chartEpsilon = Highcharts.chart('containerEpsilon', {
+let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     chart: {
         type: 'spline',
         animation: false,
@@ -285,6 +315,68 @@ let chartEpsilon = Highcharts.chart('containerEpsilon', {
     },
     series: [{
         name: 'Epsilon ',
+        data: []
+    }]
+});
+
+let epsilonTime = Highcharts.chart('epsilonTime', {
+    chart: {
+        type: 'spline',
+        animation: false,
+        marginRight: 10,
+        zoomType: "x"
+    },
+    title: {
+        text: ''
+    },
+    xAxis: {
+        title: {
+            text: 'milliseconds'
+        },
+        min: 0,
+        softMax: 12000,
+        tickPixelInterval: 150
+    },
+    yAxis: {
+        title: {
+            text: 'epsilon'
+        },
+        min: -5,
+        max: 40,
+        plotLines: [{
+            value: 0,
+            width: 1,
+            color: '#808080'
+        }]
+    },
+    plotOptions: {
+        series: {
+            marker: {
+                enabled: false
+            }
+        },
+        color: "green"
+    },
+    tooltip: {
+        formatter: function () {
+            const date = new Date(this.x);
+            let str = '';
+            str += date.getUTCDate() - 1 + ' day ';
+            str += date.getUTCHours() + " hours ";
+            str += date.getUTCMinutes() + " minutes ";
+            str += date.getUTCSeconds() + " seconds ";
+            str += date.getUTCMilliseconds() + " milliseconds ";
+            return '<b>' + this.series.name + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
+        }
+    },
+    legend: {
+        enabled: false
+    },
+    exporting: {
+        enabled: true
+    },
+    series: [{
+        name: 'Load cell ',
         data: []
     }]
 });
