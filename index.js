@@ -178,7 +178,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
     },
     xAxis: {
         title: {
-            text: 'milliseconds'
+            text: 'Milliseconds'
         },
         min: 0,
         softMax: 12000,
@@ -186,17 +186,17 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
     },
     yAxis: {
         title: {
-            text: 'kg'
+            text: 'P'
         },
         min: -5,
-        max: 30,
+        softMax: 4,
         plotLines: [{
             value: 0,
             width: 1,
             color: '#808080'
         }],
         gridLineColor: 'gray',
-        tickInterval: 5
+        tickInterval: 2
     },
     plotOptions: {
         series: {
@@ -224,7 +224,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
         enabled: true
     },
     series: [{
-        name: 'Load cell ',
+        name: 'Load cell',
         data: [],
         color: '#00f'
     }]
@@ -250,12 +250,12 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
         tickInterval: 2
     },
     yAxis: {
-        tickInterval: 5,
+        tickInterval: 2,
         title: {
-            text: 'kg'
+            text: 'P'
         },
         min: -5,
-        max: 30,
+        softMax: 4,
         plotLines: [{
             value: 0,
             width: 1,
@@ -285,7 +285,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
         enabled: true
     },
     series: [{
-        name: 'Epsilon ',
+        name: 'P',
         data: []
     }]
 });
@@ -313,14 +313,14 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             text: 'epsilon'
         },
         min: -1,
-        max: 11,
+        softMax: 2,
         plotLines: [{
             value: 0,
             width: 1,
             color: '#808080'
         }],
         gridLineColor: 'gray',
-        tickInterval: 2
+        tickInterval: 1
     },
     plotOptions: {
         series: {
@@ -348,7 +348,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
         enabled: true
     },
     series: [{
-        name: 'Load cell ',
+        name: 'Load cell',
         data: [],
         color: "green"
     }]
