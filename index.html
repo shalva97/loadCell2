@@ -17,11 +17,17 @@
 
         .chart {
             box-shadow: 0px 0 2px 2px #888;
-            min-width: 310px; height: 200px; margin: 30px auto
+            min-width: 400px; height: 200px; 
+            margin: 30px auto;
         }
 
         .chart > .highcharts-container {
             overflow: visible!important;
+        }
+
+        .charts {
+            display: flex;
+            flex-wrap: wrap;
         }
     </style>
 </head>
@@ -30,7 +36,7 @@
     <div id="app">
         <div>
             <button @click="start" :disabled="record || constrollingDCMotorManually || !(settings[0] || settings[1] || settings[2])">Start</button>
-            <button @click="handlePause" :disabled="!record">{{ isPaused ? "Resume" : "Pause" }}</button>
+            <button @click="handlePause" :disabled="!record">{{ isPaused ? "Continue" : "Pause" }}</button>
             <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">stop</button>
             <span> limit in kg: </span>
             <input type="text" id="threshold" v-model="threshold" style="width: 40px">
@@ -43,9 +49,12 @@
             <input type="checkbox" v-model="settings[1]" :disabled="record">&epsilon;
             <input type="checkbox" v-model="settings[2]" :disabled="record">&epsilon; | &sigma;
         </div>
-        <div id="sigmaTime" class="chart" v-show="settings[0]"></div>
-        <div id="epsilonTime" class="chart" v-show="settings[1]"></div>
-        <div id="sigmaEpsilon" class="chart" v-show="settings[2]"></div>
+        <div class="charts">
+            <div id="sigmaTime" class="chart" v-show="settings[0]"></div>
+            <div id="epsilonTime" class="chart" v-show="settings[1]"></div>
+            <div id="sigmaEpsilon" class="chart" v-show="settings[2]"></div>
+        </div>
+
     </div>
     <script src="index.js"></script>
 </body>

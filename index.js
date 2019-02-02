@@ -43,11 +43,15 @@ function connect() {
                     }
 
                     let [loadCellValue, epsilonValue] = sData.split("/");
-                    if (parseFloat(data.threshold) < parseFloat(loadCellValue))
+                    if (parseFloat(data.threshold) < parseFloat(loadCellValue)){
                         port.write("pause\n", (err) => {
-                            if (err)
+                            if (err) {
                                 return console.log('Error on write: ', err.message);
+                            }
+                            data.isPaused = false;
                         });
+                        
+                    }
 
                     if (data.settings[0]) {
                         sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
@@ -180,7 +184,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
         title: {
             text: 'Milliseconds'
         },
-        min: 0,
+        softMin: 0,
         softMax: 12000,
         tickPixelInterval: 150        
     },
@@ -188,7 +192,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
         title: {
             text: 'P'
         },
-        min: -5,
+        min: -1,
         softMax: 4,
         plotLines: [{
             value: 0,
@@ -196,7 +200,9 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
             color: '#808080'
         }],
         gridLineColor: 'gray',
-        tickInterval: 2
+        tickPositioner: myEpicTickPositioner
+        // tickInterval: 1,
+        // tickAmount: 8
     },
     plotOptions: {
         series: {
@@ -224,7 +230,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
         enabled: true
     },
     series: [{
-        name: 'Load cell',
+        name: 'Load cell ',
         data: [],
         color: '#00f'
     }]
@@ -244,8 +250,8 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
         title: {
             text: 'epsilon'
         },
-        min: -1,
-        max: 11,
+        //min: -1,
+        softMax: 5,
         tickPixelInterval: 150,
         tickInterval: 2
     },
@@ -254,14 +260,15 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
         title: {
             text: 'P'
         },
-        min: -5,
+        //min: -5,
         softMax: 4,
         plotLines: [{
             value: 0,
             width: 1,
             color: '#808080'
         }],
-        gridLineColor: 'gray'
+        gridLineColor: 'gray',
+        tickPositioner: myEpicTickPositioner
     },
     plotOptions: {
         series: {
@@ -285,7 +292,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
         enabled: true
     },
     series: [{
-        name: 'P',
+        name: 'P ',
         data: []
     }]
 });
@@ -304,7 +311,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
         title: {
             text: 'milliseconds'
         },
-        min: 0,
+        //min: 0,
         softMax: 12000,
         tickPixelInterval: 150
     },
@@ -312,7 +319,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
         title: {
             text: 'epsilon'
         },
-        min: -1,
+        //min: -1,
         softMax: 2,
         plotLines: [{
             value: 0,
@@ -320,7 +327,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             color: '#808080'
         }],
         gridLineColor: 'gray',
-        tickInterval: 1
+        tickPositioner: myEpicTickPositioner
     },
     plotOptions: {
         series: {
@@ -348,8 +355,16 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
         enabled: true
     },
     series: [{
-        name: 'Load cell',
+        name: 'Load cell ',
         data: [],
         color: "green"
     }]
 });
+
+function myEpicTickPositioner() {
+    let tickIntervals = []
+    for (let i = -1; i < this.dataMax + 4; i++) {
+        tickIntervals.push(i)
+    }
+    return tickIntervals;
+}
