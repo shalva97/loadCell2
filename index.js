@@ -180,6 +180,10 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
     title: {
         text: ''
     },
+    boost: {
+        useGPUTranslations: true,
+        usePreAllocated: true
+    },
     xAxis: {
         title: {
             text: 'Milliseconds'
@@ -246,6 +250,10 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     title: {
         text: ''
     },
+    boost: {
+        useGPUTranslations: true,
+        usePreAllocated: true
+    },
     xAxis: {
         title: {
             text: 'epsilon'
@@ -306,6 +314,10 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
     },
     title: {
         text: ''
+    },
+    boost: {
+        useGPUTranslations: true,
+        usePreAllocated: true
     },
     xAxis: {
         title: {
