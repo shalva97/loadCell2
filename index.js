@@ -28,7 +28,7 @@ function connect() {
             });
             parser.on('data', function (sData) {
 
-                if (data.record) {
+                //if (data.record) {
                     switch (sData) {
                         case "sos2\r":
                             data.record = false
@@ -43,12 +43,12 @@ function connect() {
                     }
 
                     let [loadCellValue, epsilonValue] = sData.split("/");
-                    if (parseFloat(data.threshold) < parseFloat(loadCellValue)){
+                    if (parseFloat(data.threshold) - 0.1 < parseFloat(loadCellValue)){
                         port.write("pause\n", (err) => {
                             if (err) {
                                 return console.log('Error on write: ', err.message);
                             }
-                            data.isPaused = false;
+                            data.isPaused = true;
                         });
                         
                     }
@@ -63,7 +63,7 @@ function connect() {
                         sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
                     }
 
-                }
+                //}
             });
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
@@ -83,7 +83,7 @@ let data = {
     zeroValue: Date.now(),
     isPaused: false,
     threshold: 3,
-    constrollingDCMotorManually: false,
+    controllingDCMotorManually: false,
     experimentType: "kg/epsilon",
     settings: [false,false, false]
 };
@@ -121,7 +121,7 @@ let myVue = new Vue({
                 .catch(() => { });
         },
         stop() {
-            if (!data.constrollingDCMotorManually)
+            if (!data.controllingDCMotorManually)
                 this.$dialog.confirm("გსურთ ექსპერიმენტის დასრულება?")
                     .then(() => {
                         port.write("stop\n", (err) => {
@@ -138,7 +138,7 @@ let myVue = new Vue({
                         return console.log('Error on write: ', err.message);
                     }
                     data.record = false
-                    data.constrollingDCMotorManually = false
+                    data.controllingDCMotorManually = false
                 })
         },
 
@@ -159,11 +159,11 @@ let myVue = new Vue({
         },
         up() {
             port.write("up\n");
-            this.constrollingDCMotorManually = true
+            this.controllingDCMotorManually = true
         },
         down() {
             port.write("down\n");
-            this.constrollingDCMotorManually = true
+            this.controllingDCMotorManually = true
         }
     },
 

@@ -17,7 +17,7 @@
 
         .chart {
             box-shadow: 0px 0 2px 2px #888;
-            min-width: 400px; height: 200px; 
+            min-width: 500px; height: 250px; 
             margin: 30px auto;
         }
 
@@ -35,15 +35,14 @@
 <body>
     <div id="app">
         <div>
-            <button @click="start" :disabled="record || constrollingDCMotorManually || !(settings[0] || settings[1] || settings[2])">Start</button>
+            <button @click="start" :disabled="record || controllingDCMotorManually || !(settings[0] || settings[1] || settings[2])">Start</button>
             <button @click="handlePause" :disabled="!record">{{ isPaused ? "Continue" : "Pause" }}</button>
-            <button @click="stop " :disabled="!(record || constrollingDCMotorManually)">stop</button>
+            <button @click="stop " :disabled="!(record || controllingDCMotorManually)">stop</button>
+
+            <button @click="up" :disabled="record || controllingDCMotorManually"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
+            <button @click="down" :disabled="record || controllingDCMotorManually"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
             <span> limit in kg: </span>
             <input type="text" id="threshold" v-model="threshold" style="width: 40px">
-            <span> x: </span>
-            <input type="text" style="width: 40px">
-            <button @click="up" :disabled="record"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
-            <button @click="down" :disabled="record"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
 
             <input type="checkbox" v-model="settings[0]" :disabled="record">&sigma;
             <input type="checkbox" v-model="settings[1]" :disabled="record">&epsilon;
