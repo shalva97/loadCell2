@@ -8,8 +8,8 @@
     <script src="fe-scripts/highcharts.js"></script>
     <script src="fe-scripts/exporting.js"></script>
     <script src="fe-scripts/export-data.js"></script>
-    <link href="./node_modules/vuejs-dialog/dist/vuejs-dialog.min.css" rel="stylesheet">
-    <script type="text/javascript" src="./node_modules/vuejs-dialog/dist/vuejs-dialog.min.js"></script>
+    <link href="node_modules/vuejs-dialog/dist/vuejs-dialog.min.css" rel="stylesheet">
+    <script type="text/javascript" src="node_modules/vuejs-dialog/dist/vuejs-dialog.min.js"></script>
     <style>
         body {
             background-color: #efefef;
@@ -29,6 +29,42 @@
             display: flex;
             flex-wrap: wrap;
         }
+
+        .up {
+            background-image: url('img/up.png');
+            background-position: center;
+            background-size: 50px 15px;
+            background-repeat: no-repeat;
+            width: 70px;
+            height: 23px;
+        }
+
+        .down {
+            background-image: url('img/down.png');
+            background-position: center;
+            background-size: 50px 15px;
+            background-repeat: no-repeat;
+            width: 70px;
+            height: 23px;
+        }
+
+        .up:disabled {
+            background-image: url('img/upDisabled.png');
+            background-position: center;
+            background-size: 50px 15px;
+            background-repeat: no-repeat;
+            width: 70px;
+            height: 23px;
+        }
+
+        .down:disabled {
+            background-image: url('img/downDisabled.png');
+            background-position: center;
+            background-size: 50px 15px;
+            background-repeat: no-repeat;
+            width: 70px;
+            height: 23px;
+        }
     </style>
 </head>
 
@@ -39,8 +75,8 @@
             <button @click="handlePause" :disabled="!record">{{ isPaused ? "Continue" : "Pause" }}</button>
             <button @click="stop " :disabled="!(record || controllingDCMotorManually)">stop</button>
 
-            <button @click="up" :disabled="record || controllingDCMotorManually"><img src="img/up.png" style="width:50px; height: 12px;" /></button>
-            <button @click="down" :disabled="record || controllingDCMotorManually"><img src="img/down.png" style="width:50px; height: 12px;" /></button>
+            <button class="up" @click="up" :disabled="record || controllingDCMotorManually"></button>
+            <button class="down" @click="down" :disabled="record || controllingDCMotorManually"></button>
             <span> limit in kg: </span>
             <input type="text" id="threshold" v-model="threshold" style="width: 40px">
 
