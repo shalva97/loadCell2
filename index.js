@@ -2,6 +2,7 @@
 nw.Window.get().showDevTools();
 const SerialPort = require("serialport");
 const ReadLine = SerialPort.parsers.Readline;
+const fs = require('fs');
 let reconnectTimer;
 let port;
 
@@ -28,7 +29,7 @@ function connect() {
             });
             parser.on('data', function (sData) {
 
-                //if (data.record) {
+                if (data.record) {
                     switch (sData) {
                         case "sos2\r":
                             data.record = false
@@ -54,16 +55,22 @@ function connect() {
                     }
 
                     if (data.settings[0]) {
-                        sigmaTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)], true, false);
+                        let point = [(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)]
+                        sigmaTime.series[0].addPoint(point, true, false);
+                        fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${point[0]},${point[1]}\n`)
                     }
                     if (data.settings[1]) {
-                        epsilonTime.series[0].addPoint([(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)], true, false);
+                        let point = [(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)]
+                        epsilonTime.series[0].addPoint(point, true, false);
+                        fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${point[0]},${point[1]}\n`)
                     }
                     if (data.settings[2]) {
-                        sigmaEpsilon.series[0].addPoint([parseFloat(epsilonValue), parseFloat(loadCellValue)], true, false);
+                        let point = [parseFloat(epsilonValue), parseFloat(loadCellValue)]
+                        sigmaEpsilon.series[0].addPoint(point, true, false);
+                        fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${point[0]},${point[1]}\n`)
                     }
 
-                //}
+                }
             });
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
@@ -78,6 +85,7 @@ function connect() {
         });
     });
 }
+
 let data = {
     record: false,
     zeroValue: Date.now(),
@@ -85,7 +93,9 @@ let data = {
     threshold: 3,
     controllingDCMotorManually: false,
     experimentType: "kg/epsilon",
-    settings: [false,false, false]
+    settings: [false,false, false],
+    fileSaveDir: "./data/",
+    totalNumberOfrecords = [0,0,0]
 };
 
 Vue.use(VuejsDialog.main.default, {
