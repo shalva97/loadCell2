@@ -28,7 +28,6 @@ function connect() {
                 console.log("connection established to device/წარმატებით დავუკავშირდი");
             });
             parser.on('data', function (sData) {
-
                 if (data.record) {
                     switch (sData) {
                         case "sos2\r":
@@ -44,14 +43,21 @@ function connect() {
                     }
 
                     let [loadCellValue, epsilonValue] = sData.split("/");
-                    if (parseFloat(data.threshold) - 0.1 < parseFloat(loadCellValue)){
+                    loadCellValue = parseFloat(loadCellValue)
+                    epsilonValue = parseFloat(epsilonValue)
+                    if (parseFloat(data.threshold) - 0.1 < loadCellValue){
                         port.write("pause\n", (err) => {
                             if (err) {
                                 return console.log('Error on write: ', err.message);
                             }
                             data.isPaused = true;
-                        });
-                        
+                        })
+                    }
+
+                    if (data.isPaused 
+                        && sigmaTime.series[0].data.length > 0 
+                        && Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - loadCellValue) < 0.05) {
+                        return
                     }
 
                     if (data.settings[0]) {
@@ -59,11 +65,13 @@ function connect() {
                         sigmaTime.series[0].addPoint(point, true, false);
                         fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${point[0]},${point[1]}\n`)
                     }
+                    
                     if (data.settings[1]) {
                         let point = [(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)]
                         epsilonTime.series[0].addPoint(point, true, false);
                         fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${point[0]},${point[1]}\n`)
                     }
+
                     if (data.settings[2]) {
                         let point = [parseFloat(epsilonValue), parseFloat(loadCellValue)]
                         sigmaEpsilon.series[0].addPoint(point, true, false);
@@ -90,12 +98,11 @@ let data = {
     record: false,
     zeroValue: Date.now(),
     isPaused: false,
-    threshold: 3,
+    threshold: 1,
     controllingDCMotorManually: false,
     experimentType: "kg/epsilon",
-    settings: [false,false, false],
-    fileSaveDir: "./data/",
-    totalNumberOfrecords = [0,0,0]
+    settings: [true,false, false],
+    fileSaveDir: "./data/"
 };
 
 Vue.use(VuejsDialog.main.default, {
@@ -149,6 +156,7 @@ let myVue = new Vue({
                     }
                     data.record = false
                     data.controllingDCMotorManually = false
+                    data.isPaused = false
                 })
         },
 
