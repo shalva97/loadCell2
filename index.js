@@ -45,7 +45,7 @@ function connect() {
                     }
 
 
-                    if (parseFloat(data.threshold) - 0.1 < loadCellValue){
+                    if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
                         port.write("pause\n", (err) => {
                             if (err) {
                                 return console.log('Error on write: ', err.message);
@@ -54,16 +54,17 @@ function connect() {
                         })
                     }
 
-                    p = loadCellValue/(epsilonValue + 1) * data.sampleArea
-                    sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
-                    epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
-                    sigmaEpsilonValues = [epsilonValue, p]
+                    let p = (loadCellValue / (epsilonValue + 1) * data.sampleArea).toFixed(3)
+                    let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
+                    let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
+                    let sigmaEpsilonValues = [epsilonValue, p]
+
                     fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${sigmaTimeValues[0]},${sigmaTimeValues[1]}\n`)
-                    fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)                    
+                    fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
                     fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
 
-                    if (data.isPaused 
-                        && sigmaTime.series[0].data.length > 0 
+                    if (data.isPaused
+                        && sigmaTime.series[0].data.length > 0
                         && Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) < 0.05) {
                         return
                     }
@@ -71,7 +72,7 @@ function connect() {
                     if (data.settings[0]) {//loadcell/time
                         sigmaTime.series[0].addPoint(point, true, false);
                     }
-                    
+
                     if (data.settings[1]) {//epsilon/time
                         epsilonTime.series[0].addPoint(point, true, false);
                     }
@@ -103,7 +104,7 @@ let data = {
     threshold: 1,
     controllingDCMotorManually: false,
     experimentType: "kg/epsilon",
-    settings: [true,false, false], //loadcell/time epsilon/time loadcell/epsilon
+    settings: [true, false, false], //loadcell/time epsilon/time loadcell/epsilon
     fileSaveDir: "./data/",
     sampleArea: 1.6
 };
@@ -137,11 +138,13 @@ let myVue = new Vue({
                     sigmaTime.redraw();
                     sigmaEpsilon.redraw();
                     epsilonTime.redraw();
+
+
                 })
                 .catch(() => { });
         },
         stop() {
-            if (!data.controllingDCMotorManually)
+            if (!data.controllingDCMotorManually) {
                 this.$dialog.confirm("გსურთ ექსპერიმენტის დასრულება?")
                     .then(() => {
                         port.write("stop\n", (err) => {
@@ -152,7 +155,7 @@ let myVue = new Vue({
                         });
                     })
                     .catch(function () { });
-            else
+            } else {
                 port.write("stop\n", err => {
                     if (err) {
                         return console.log('Error on write: ', err.message);
@@ -161,6 +164,7 @@ let myVue = new Vue({
                     data.controllingDCMotorManually = false
                     data.isPaused = false
                 })
+            }
         },
 
         handlePause() {
@@ -178,10 +182,12 @@ let myVue = new Vue({
                 });
             }
         },
+
         up() {
             port.write("up\n");
             this.controllingDCMotorManually = true
         },
+
         down() {
             port.write("down\n");
             this.controllingDCMotorManually = true
@@ -211,7 +217,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
         },
         softMin: 0,
         softMax: 12000,
-        tickPixelInterval: 150        
+        tickPixelInterval: 150
     },
     yAxis: {
         title: {
@@ -367,7 +373,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             marker: {
                 enabled: false
             }
-        }        
+        }
     },
     tooltip: {
         formatter: function () {
