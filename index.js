@@ -1,3 +1,4 @@
+//@ts-checkts-check
 "use strict";
 nw.Window.get().showDevTools();
 const SerialPort = require("serialport");
@@ -28,23 +29,22 @@ function connect() {
                 console.log("connection established to device/წარმატებით დავუკავშირდი");
             });
             parser.on('data', function (sData) {
+                let [loadCellValue, epsilonValue] = sData.split("/");
+                loadCellValue = parseFloat(loadCellValue)
+                epsilonValue = parseFloat(epsilonValue)
                 if (data.record) {
                     switch (sData) {
                         case "sos2\r":
                             data.record = false
                             Vue.dialog.alert("ნიმუში გაწყდა")
                             return
-                            break
                         case "sos1\r":
                             data.record = false
                             Vue.dialog.alert("ნიმუში გაიწელა 10მმ-ით")
                             return
-                            break
                     }
 
-                    let [loadCellValue, epsilonValue] = sData.split("/");
-                    loadCellValue = parseFloat(loadCellValue)
-                    epsilonValue = parseFloat(epsilonValue)
+
                     if (parseFloat(data.threshold) - 0.1 < loadCellValue){
                         port.write("pause\n", (err) => {
                             if (err) {
@@ -54,28 +54,30 @@ function connect() {
                         })
                     }
 
+                    p = loadCellValue/(epsilonValue + 1) * data.sampleArea
+                    sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
+                    epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
+                    sigmaEpsilonValues = [epsilonValue, p]
+                    fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${sigmaTimeValues[0]},${sigmaTimeValues[1]}\n`)
+                    fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)                    
+                    fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
+
                     if (data.isPaused 
                         && sigmaTime.series[0].data.length > 0 
-                        && Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - loadCellValue) < 0.05) {
+                        && Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) < 0.05) {
                         return
                     }
 
-                    if (data.settings[0]) {
-                        let point = [(new Date()).getTime() - data.zeroValue, parseFloat(loadCellValue)]
+                    if (data.settings[0]) {//loadcell/time
                         sigmaTime.series[0].addPoint(point, true, false);
-                        fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${point[0]},${point[1]}\n`)
                     }
                     
-                    if (data.settings[1]) {
-                        let point = [(new Date()).getTime() - data.zeroValue, parseFloat(epsilonValue)]
+                    if (data.settings[1]) {//epsilon/time
                         epsilonTime.series[0].addPoint(point, true, false);
-                        fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${point[0]},${point[1]}\n`)
                     }
 
-                    if (data.settings[2]) {
-                        let point = [parseFloat(epsilonValue), parseFloat(loadCellValue)]
+                    if (data.settings[2]) {//loadcell/epsilon
                         sigmaEpsilon.series[0].addPoint(point, true, false);
-                        fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${point[0]},${point[1]}\n`)
                     }
 
                 }
@@ -101,8 +103,9 @@ let data = {
     threshold: 1,
     controllingDCMotorManually: false,
     experimentType: "kg/epsilon",
-    settings: [true,false, false],
-    fileSaveDir: "./data/"
+    settings: [true,false, false], //loadcell/time epsilon/time loadcell/epsilon
+    fileSaveDir: "./data/",
+    sampleArea: 1.6
 };
 
 Vue.use(VuejsDialog.main.default, {

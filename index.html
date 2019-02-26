@@ -79,6 +79,8 @@
             <button class="down" @click="down" :disabled="record || controllingDCMotorManually"></button>
             <span> limit in kg: </span>
             <input type="text" id="threshold" v-model="threshold" style="width: 40px">
+            <span> K: </span>
+            <input type="text" id="sampleArea" v-model="sampleArea" style="width: 40px">
 
             <input type="checkbox" v-model="settings[0]" :disabled="record">&sigma;
             <input type="checkbox" v-model="settings[1]" :disabled="record">&epsilon;
