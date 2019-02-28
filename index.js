@@ -1,4 +1,4 @@
-//@ts-checkts-check
+//@ts-check
 "use strict";
 nw.Window.get().showDevTools();
 const SerialPort = require("serialport");
@@ -28,61 +28,7 @@ function connect() {
             port.on("open", () => {
                 console.log("connection established to device/წარმატებით დავუკავშირდი");
             });
-            parser.on('data', function (sData) {
-                let [loadCellValue, epsilonValue] = sData.split("/");
-                loadCellValue = parseFloat(loadCellValue)
-                epsilonValue = parseFloat(epsilonValue)
-                if (data.record) {
-                    switch (sData) {
-                        case "sos2\r":
-                            data.record = false
-                            Vue.dialog.alert("ნიმუში გაწყდა")
-                            return
-                        case "sos1\r":
-                            data.record = false
-                            Vue.dialog.alert("ნიმუში გაიწელა 10მმ-ით")
-                            return
-                    }
-
-
-                    if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
-                        port.write("pause\n", (err) => {
-                            if (err) {
-                                return console.log('Error on write: ', err.message);
-                            }
-                            data.isPaused = true;
-                        })
-                    }
-
-                    let p = (loadCellValue / (epsilonValue + 1) * data.sampleArea).toFixed(3)
-                    let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
-                    let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
-                    let sigmaEpsilonValues = [epsilonValue, p]
-
-                    fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${sigmaTimeValues[0]},${sigmaTimeValues[1]}\n`)
-                    fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
-                    fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
-
-                    if (data.isPaused
-                        && sigmaTime.series[0].data.length > 0
-                        && Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) < 0.05) {
-                        return
-                    }
-
-                    if (data.settings[0]) {//loadcell/time
-                        sigmaTime.series[0].addPoint(point, true, false);
-                    }
-
-                    if (data.settings[1]) {//epsilon/time
-                        epsilonTime.series[0].addPoint(point, true, false);
-                    }
-
-                    if (data.settings[2]) {//loadcell/epsilon
-                        sigmaEpsilon.series[0].addPoint(point, true, false);
-                    }
-
-                }
-            });
+            parser.on('data', handleReceivedData)
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
                 reconnectTimer = setTimeout(connect, 4000);
@@ -101,9 +47,8 @@ let data = {
     record: false,
     zeroValue: Date.now(),
     isPaused: false,
-    threshold: 1,
+    threshold: "1",
     controllingDCMotorManually: false,
-    experimentType: "kg/epsilon",
     settings: [true, false, false], //loadcell/time epsilon/time loadcell/epsilon
     fileSaveDir: "./data/",
     sampleArea: 1.6
@@ -406,4 +351,92 @@ function myEpicTickPositioner() {
         tickIntervals.push(i)
     }
     return tickIntervals;
+}
+
+function handleReceivedData(receivedData) {
+    let [loadCellValue, epsilonValue] = receivedData.split("/");
+    loadCellValue = parseFloat(loadCellValue)
+    epsilonValue = parseFloat(epsilonValue)
+    if (data.record) {
+        switch (receivedData) {
+            case "sos2\r":
+                data.record = false
+                Vue.dialog.alert("ნიმუში გაწყდა")
+                return
+            case "sos1\r":
+                data.record = false
+                Vue.dialog.alert("ნიმუში გაიწელა 10მმ-ით")
+                return
+        }
+
+
+        if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
+            port.write("pause\n", (err) => {
+                if (err) {
+                    return console.log('Error on write: ', err.message);
+                }
+                data.isPaused = true;
+            })
+        }
+
+        let p = parseFloat((loadCellValue / (epsilonValue + 1) * data.sampleArea).toFixed(3))
+        let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
+        let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
+        let sigmaEpsilonValues = [epsilonValue, p]
+
+        fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${sigmaTimeValues[0]},${sigmaTimeValues[1]}\n`)
+        fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
+        fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
+
+        if (data.isPaused
+            && sigmaTime.series[0].data.length > 0
+            && Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) < 0.05
+            && data.settings[0]) {
+            sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
+        }
+
+        if (data.isPaused
+            && epsilonTime.series[0].data.length > 0
+            && Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) < 0.05
+            && data.settings[1]) {
+            epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
+        }
+
+        if (data.isPaused
+            && sigmaEpsilon.series[0].data.length > 0
+            && (Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) < 0.05
+                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) < 0.05)
+            && data.settings[2]) {
+            sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false);
+        }
+
+        // if (data.settings[0]) {//loadcell/time
+        //     sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
+        // }
+
+        // if (data.settings[1]) {//epsilon/time
+        //     epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
+        // }
+
+        // if (data.settings[2]) {//loadcell/epsilon
+        //     sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false);
+        // }
+    }
+}
+
+
+function emulate() {
+    fs.readFile(data.fileSaveDir + "sigmaEpsilon.csv", 'utf8', function(err, contents) {
+        let dataLines = contents.split('\n')
+        let timer = setInterval(() => {
+            let currentData = dataLines.shift()
+            if (currentData) {
+                handleReceivedData(currentData)
+            } else {
+                clearInterval(timer)
+            }
+        }, 1000)
+        console.log(contents);
+    });
+
 }
