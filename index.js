@@ -28,7 +28,9 @@ function connect() {
             port.on("open", () => {
                 console.log("connection established to device/წარმატებით დავუკავშირდი");
             });
-            parser.on('data', handleReceivedData)
+            parser.on('data', recevedData => {
+                handleReceivedData(recevedData, port)
+            })
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
                 reconnectTimer = setTimeout(connect, 4000);
@@ -47,7 +49,7 @@ let data = {
     record: false,
     zeroValue: Date.now(),
     isPaused: false,
-    threshold: "1",
+    threshold: "20",
     controllingDCMotorManually: false,
     settings: [true, false, false], //loadcell/time epsilon/time loadcell/epsilon
     fileSaveDir: "./data/",
@@ -353,7 +355,7 @@ function myEpicTickPositioner() {
     return tickIntervals;
 }
 
-function handleReceivedData(receivedData) {
+function handleReceivedData(receivedData, port) {
     let [loadCellValue, epsilonValue] = receivedData.split("/");
     loadCellValue = parseFloat(loadCellValue)
     epsilonValue = parseFloat(epsilonValue)
@@ -388,55 +390,76 @@ function handleReceivedData(receivedData) {
         fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
         fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
 
-        if (data.isPaused
-            && sigmaTime.series[0].data.length > 0
-            && Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) < 0.05
-            && data.settings[0]) {
+        if (sigmaTime.series[0].data.length === 0
+            || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > 0.02
+            && data.settings[0])) {
             sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
         }
-
-        if (data.isPaused
-            && epsilonTime.series[0].data.length > 0
-            && Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) < 0.05
-            && data.settings[1]) {
+    
+        if (epsilonTime.series[0].data.length === 0
+            || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.02
+                && data.settings[1])) {
             epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
         }
-
-        if (data.isPaused
-            && sigmaEpsilon.series[0].data.length > 0
-            && (Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) < 0.05
-                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) < 0.05)
-            && data.settings[2]) {
+    
+        if (sigmaEpsilon.series[0].data.length === 0
+            || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > 0.02
+                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.02)
+                && data.settings[2])) {
             sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false);
         }
 
-        // if (data.settings[0]) {//loadcell/time
-        //     sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
-        // }
-
-        // if (data.settings[1]) {//epsilon/time
-        //     epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
-        // }
-
-        // if (data.settings[2]) {//loadcell/epsilon
-        //     sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false);
-        // }
     }
 }
 
 
 function emulate() {
-    fs.readFile(data.fileSaveDir + "sigmaEpsilon.csv", 'utf8', function(err, contents) {
+    data.record = true
+    port = {
+        write(mes) {
+            console.log("port.write: " + mes)
+        }
+    }
+    fs.readFile(data.fileSaveDir + "emulation.csv", 'utf8', function (err, contents) {
         let dataLines = contents.split('\n')
         let timer = setInterval(() => {
             let currentData = dataLines.shift()
             if (currentData) {
-                handleReceivedData(currentData)
+                handleReceivedData(currentData, port)
             } else {
                 clearInterval(timer)
             }
         }, 1000)
-        console.log(contents);
     });
 
+}
+
+function handleReceivedEmulatedData(receivedData) {
+    let [loadCellValue, epsilonValue] = receivedData.split("/");
+    loadCellValue = parseFloat(loadCellValue)
+    epsilonValue = parseFloat(epsilonValue)
+
+    let p = parseFloat((loadCellValue / (epsilonValue + 1) * data.sampleArea).toFixed(3))
+    let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
+    let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
+    let sigmaEpsilonValues = [epsilonValue, p]
+
+    if (sigmaTime.series[0].data.length === 0
+        || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > 0.02
+        && data.settings[0])) {
+        sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
+    }
+
+    if (epsilonTime.series[0].data.length === 0
+        || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.02
+            && data.settings[1])) {
+        epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
+    }
+
+    if (sigmaEpsilon.series[0].data.length === 0
+        || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > 0.02
+            || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.02)
+            && data.settings[2])) {
+        sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false);
+    }
 }
