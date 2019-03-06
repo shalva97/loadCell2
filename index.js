@@ -371,7 +371,6 @@ function handleReceivedData(receivedData, port) {
                 return
         }
 
-
         if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
             port.write("pause\n", (err) => {
                 if (err) {
@@ -432,34 +431,4 @@ function emulate() {
         }, 1000)
     });
 
-}
-
-function handleReceivedEmulatedData(receivedData) {
-    let [loadCellValue, epsilonValue] = receivedData.split("/");
-    loadCellValue = parseFloat(loadCellValue)
-    epsilonValue = parseFloat(epsilonValue)
-
-    let p = parseFloat((loadCellValue / (epsilonValue + 1) * data.sampleArea).toFixed(3))
-    let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
-    let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
-    let sigmaEpsilonValues = [epsilonValue, p]
-
-    if (sigmaTime.series[0].data.length === 0
-        || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > 0.02
-        && data.settings[0])) {
-        sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
-    }
-
-    if (epsilonTime.series[0].data.length === 0
-        || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.02
-            && data.settings[1])) {
-        epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
-    }
-
-    if (sigmaEpsilon.series[0].data.length === 0
-        || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > 0.02
-            || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.02)
-            && data.settings[2])) {
-        sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false);
-    }
 }
