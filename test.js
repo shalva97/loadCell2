@@ -10,6 +10,7 @@ for (let i = 0, j = 0
         data = data + i.toFixed(2) + "/" + j.toFixed(4) + "\n"
 
 }
-fs.appendFileSync('./data/emulation.csv', data)
+fs.mkdirSync("data/asdf")
+fs.appendFileSync('./data/asdf/emulation.csv', data)
 
 //console.log((Math.random() + i).toFixed(3))

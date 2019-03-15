@@ -86,7 +86,8 @@ let myVue = new Vue({
                     sigmaEpsilon.redraw();
                     epsilonTime.redraw();
 
-
+                    data.fileSaveDir = "data/" + (new Date).toISOString().replace(/:/g, "-")
+                    fs.mkdirSync(data.fileSaveDir)
                 })
                 .catch(() => { });
         },
@@ -162,7 +163,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
         title: {
             text: 'Milliseconds'
         },
-        softMin: 0,
+        //softMin: 0,
         softMax: 12000,
         tickPixelInterval: 150
     },
@@ -391,21 +392,29 @@ function handleReceivedData(receivedData, port) {
 
         if (sigmaTime.series[0].data.length === 0
             || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > 0.02
-            && data.settings[0])) {
+                && data.settings[0])) {
             sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
+            if (sigmaTime.series[0].data.length > 500) {
+                sigmaTime.series[0].data[0].remove()
+            }
         }
-    
+
         if (epsilonTime.series[0].data.length === 0
             || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.02
                 && data.settings[1])) {
             epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
+            if (epsilonTime.series[0].data.length > 500) {
+                epsilonTime.series[0].data[0].remove()
+            }
         }
-    
+
         if (sigmaEpsilon.series[0].data.length === 0
             || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > 0.02
                 || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.02)
                 && data.settings[2])) {
-            sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false);
+            sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
+            if (sigmaEpsilon.series[0].data.length > 500)
+            sigmaEpsilon.series[0].data[0].remove()
         }
 
     }
