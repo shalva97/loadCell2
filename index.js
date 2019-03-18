@@ -29,6 +29,7 @@ function connect() {
                 console.log("connection established to device/წარმატებით დავუკავშირდი");
             });
             parser.on('data', recevedData => {
+                //console.log(recevedData)
                 handleReceivedData(recevedData, port)
             })
             port.on('close', function () {
@@ -86,7 +87,9 @@ let myVue = new Vue({
                     sigmaEpsilon.redraw();
                     epsilonTime.redraw();
 
-                    data.fileSaveDir = "data/" + (new Date).toISOString().replace(/:/g, "-")
+                    let date = new Date(); // Or the date you'd like converted.
+                    let isoDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
+                    data.fileSaveDir = "data/" + isoDate.replace(/:/g, "-") + "/"
                     fs.mkdirSync(data.fileSaveDir)
                 })
                 .catch(() => { });
@@ -99,7 +102,6 @@ let myVue = new Vue({
                             if (err)
                                 return console.log('Error on write: ', err.message);
                             data.record = false;
-                            this.$dialog.alert("გთხოვთ გადმოწეროთ ექსპერიმენტის მონაცემები, რადგან პროგრამის გათიშვისას წაიშლება.");
                         });
                     })
                     .catch(function () { });
@@ -350,7 +352,9 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
 
 function myEpicTickPositioner() {
     let tickIntervals = []
-    for (let i = -1; i < this.dataMax + 4; i++) {
+    let max = this.dataMax + 4
+    let incrementBy = max > 12 ? 2 : 1
+    for (let i = -1; i < this.dataMax + 4; i += incrementBy) {
         tickIntervals.push(i)
     }
     return tickIntervals;
@@ -414,7 +418,7 @@ function handleReceivedData(receivedData, port) {
                 && data.settings[2])) {
             sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
             if (sigmaEpsilon.series[0].data.length > 500)
-            sigmaEpsilon.series[0].data[0].remove()
+                sigmaEpsilon.series[0].data[0].remove()
         }
 
     }
@@ -440,4 +444,15 @@ function emulate() {
         }, 1000)
     });
 
+}
+
+function emulate2(n) {
+    let randomData = []
+    for (let i = 0; i < n; i ++) {
+        randomData.push([i, Math.floor(Math.random() * 10) + 1])
+    }
+
+    sigmaTime.series[0].setData(randomData)
+    sigmaEpsilon.series[0].setData(randomData)
+    epsilonTime.series[0].setData(randomData)
 }

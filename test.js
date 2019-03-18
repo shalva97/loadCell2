@@ -1,16 +1,32 @@
-const fs = require('fs');
-
-let data = ""
-let r = 4
-
-for (let i = 0, j = 0
-    ; i < 40
-    ; i = Math.random() + i, j = Math.random()/4 + j) {
-
-        data = data + i.toFixed(2) + "/" + j.toFixed(4) + "\n"
-
-}
-fs.mkdirSync("data/asdf")
-fs.appendFileSync('./data/asdf/emulation.csv', data)
-
-//console.log((Math.random() + i).toFixed(3))
+var XLSXChart = require ("xlsx-chart");
+var fs = require ("fs");
+var xlsxChart = new XLSXChart ();
+var opts = {
+	chart: "line",
+	titles: [
+		"Price"
+	],
+	fields: [
+		"Apple",
+		"Blackberry",
+		"Strawberry",
+		"Cowberry"
+	],
+	data: {
+		"Price": {
+			"Apple": 10,
+			"Blackberry": 5,
+			"Strawberry": 15,
+			"Cowberry": 20
+		}
+	},
+	chartTitle: "Line chart"
+};
+xlsxChart.generate (opts, function (err, data) {
+	if (err) {
+		console.error (err);
+	} else {
+		fs.writeFileSync ("line.xlsx", data);
+		console.log ("line.xlsx created.");
+	};
+});
