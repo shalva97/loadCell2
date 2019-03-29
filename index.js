@@ -54,7 +54,8 @@ let data = {
     controllingDCMotorManually: false,
     settings: [true, false, false], //loadcell/time epsilon/time loadcell/epsilon
     fileSaveDir: "./data/",
-    sampleArea: 1.6
+    sampleArea: 1.6,
+    helpToFilterEverySecondData: false
 };
 
 Vue.use(VuejsDialog.main.default, {
@@ -300,7 +301,6 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
         title: {
             text: 'milliseconds'
         },
-        //min: 0,
         softMax: 12000,
         tickPixelInterval: 150
     },
@@ -361,6 +361,12 @@ function myEpicTickPositioner() {
 }
 
 function handleReceivedData(receivedData, port) {
+    if (data.helpToFilterEverySecondData) {
+        data.helpToFilterEverySecondData = false
+        return
+    } else {
+        data.helpToFilterEverySecondData = true
+    }
     let [loadCellValue, epsilonValue] = receivedData.split("/");
     loadCellValue = parseFloat(loadCellValue)
     epsilonValue = parseFloat(epsilonValue)
@@ -398,7 +404,7 @@ function handleReceivedData(receivedData, port) {
             || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > 0.02
                 && data.settings[0])) {
             sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
-            if (sigmaTime.series[0].data.length > 500) {
+            if (sigmaTime.series[0].data.length > 10000) {
                 sigmaTime.series[0].data[0].remove()
             }
         }
@@ -407,7 +413,7 @@ function handleReceivedData(receivedData, port) {
             || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.02
                 && data.settings[1])) {
             epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
-            if (epsilonTime.series[0].data.length > 500) {
+            if (epsilonTime.series[0].data.length > 10000) {
                 epsilonTime.series[0].data[0].remove()
             }
         }
@@ -417,7 +423,7 @@ function handleReceivedData(receivedData, port) {
                 || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.02)
                 && data.settings[2])) {
             sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
-            if (sigmaEpsilon.series[0].data.length > 500)
+            if (sigmaEpsilon.series[0].data.length > 10000)
                 sigmaEpsilon.series[0].data[0].remove()
         }
 
@@ -443,16 +449,33 @@ function emulate() {
             }
         }, 1000)
     });
-
 }
 
 function emulate2(n) {
     let randomData = []
-    for (let i = 0; i < n; i ++) {
+    for (let i = 0; i < n; i++) {
         randomData.push([i, Math.floor(Math.random() * 10) + 1])
     }
 
     sigmaTime.series[0].setData(randomData)
     sigmaEpsilon.series[0].setData(randomData)
     epsilonTime.series[0].setData(randomData)
+}
+
+function emulate3(n) {
+    let randomData = []
+    for (let i = 0; i < n; i++) {
+        randomData.push([i, Math.floor(Math.random() * 10) + 1])
+    }
+
+    let timer = setInterval(() => {
+        let point = randomData.shift()
+        sigmaTime.series[0].addPoint(point)
+        sigmaEpsilon.series[0].addPoint(point)
+        epsilonTime.series[0].addPoint(point)
+        if (randomData.length < 1) {
+            clearInterval(timer)
+        }
+    }, 1000)
+
 }
