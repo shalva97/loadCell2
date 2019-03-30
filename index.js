@@ -410,7 +410,7 @@ function handleReceivedData(receivedData, port) {
         }
 
         if (epsilonTime.series[0].data.length === 0
-            || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.02
+            || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.002
                 && data.settings[1])) {
             epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
             if (epsilonTime.series[0].data.length > 10000) {
@@ -420,7 +420,7 @@ function handleReceivedData(receivedData, port) {
 
         if (sigmaEpsilon.series[0].data.length === 0
             || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > 0.02
-                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.02)
+                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.002)
                 && data.settings[2])) {
             sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
             if (sigmaEpsilon.series[0].data.length > 10000)
