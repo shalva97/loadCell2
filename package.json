@@ -16,7 +16,7 @@
   "window": {
     "title": "Load Cell",
     "frame": true,
-    "width": 620,
+    "width": 660,
     "height": 500,
     "position": "center"
   },
