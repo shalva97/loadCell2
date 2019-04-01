@@ -58,6 +58,7 @@ let data = {
     fileSaveDir: "./data/",
     sampleArea: 1.6,
     helpToFilterEverySecondData: false,
+    chart_displayed_data: 10000,
     lcv: [0,0,0,0],//shift register for input data, to filter out spikes
     epv: [0,0,0,0] //shift register for input data, to filter out spikes
 };
@@ -509,7 +510,7 @@ function handleReceivedData(receivedData, port) {
             || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > 0.02    //filter out similar data from display
                 && data.settings[0])) {
             sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
-            if (sigmaTime.series[0].data.length > 10000) {
+            if (sigmaTime.series[0].data.length > data.chart_displayed_data) {
                 sigmaTime.series[0].data[0].remove()
             }
         }
@@ -518,7 +519,7 @@ function handleReceivedData(receivedData, port) {
             || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.002  //filter out similar data from display
                 && data.settings[1])) {
             epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
-            if (epsilonTime.series[0].data.length > 10000) {
+            if (epsilonTime.series[0].data.length > data.chart_displayed_data) {
                 epsilonTime.series[0].data[0].remove()
             }
         }
@@ -528,7 +529,7 @@ function handleReceivedData(receivedData, port) {
                 || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.002)  //filter out similar data from display
                 && data.settings[2])) {
             sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
-            if (sigmaEpsilon.series[0].data.length > 10000)
+            if (sigmaEpsilon.series[0].data.length > data.chart_displayed_data)
                 sigmaEpsilon.series[0].data[0].remove()
         }
 
