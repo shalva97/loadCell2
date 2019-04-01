@@ -599,3 +599,10 @@ function DetectSpike(a,b,c){
     )
      
 }
+
+function log(str) {
+    console.log(str)
+    fs.appendFileSync('log.txt', str + "\n");
+}
+
+log("asdf")
