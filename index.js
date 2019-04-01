@@ -59,6 +59,8 @@ let data = {
     sampleArea: 1.6,
     helpToFilterEverySecondData: false,
     chartDataLengthLimit: 10000,
+    epsilonFilter: 0.0,
+    kgFilter: 0,
     lcv: [0,0,0,0],//shift register for input data, to filter out spikes
     epv: [0,0,0,0], //shift register for input data, to filter out spikes
     logData: getFileSaveDirWithTime()
@@ -310,7 +312,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
         }
     },
     series: [{
-        name: 'P ',
+        name: 'σ (sigma) ',
         data: []
     }]
 });
@@ -405,14 +407,14 @@ function myEpicTickPositioner() {
     let tickIntervals = []
     let max = this.dataMax + 4
     let incrementBy = max > 12 ? 2 : 1
-    for (let i = -0.5; i < this.dataMax + 1; i += incrementBy) {
+    for (let i = 0; i < this.dataMax + 2; i += incrementBy) {
         tickIntervals.push(i)
     }
     return tickIntervals;
 }
 
 function handleReceivedData(receivedData, port) {
-    // console.log(receivedData)
+    console.log(receivedData)
     
     //filter every second data
     if (data.helpToFilterEverySecondData) {
@@ -503,10 +505,9 @@ function handleReceivedData(receivedData, port) {
         fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
         fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
 
-
         
         if (sigmaTime.series[0].data.length === 0
-            || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > 0.02    //filter out similar data from display
+            || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > data.kgFilter    //filter out similar data from display
                 && data.settings[0])) {
             sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
             if (sigmaTime.series[0].data.length > data.chartDataLengthLimit) {
@@ -515,7 +516,7 @@ function handleReceivedData(receivedData, port) {
         }
 
         if (epsilonTime.series[0].data.length === 0
-            || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > 0.002  //filter out similar data from display
+            || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > data.epsilonFilter  //filter out similar data from display
                 && data.settings[1])) {
             epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
             if (epsilonTime.series[0].data.length > data.chartDataLengthLimit) {
@@ -524,8 +525,8 @@ function handleReceivedData(receivedData, port) {
         }
 
         if (sigmaEpsilon.series[0].data.length === 0
-            || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > 0.02
-                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > 0.002)  //filter out similar data from display
+            || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > data.kgFilter
+                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > data.epsilonFilter)  //filter out similar data from display
                 && data.settings[2])) {
             sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
             if (sigmaEpsilon.series[0].data.length > data.chartDataLengthLimit)
