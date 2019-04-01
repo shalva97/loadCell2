@@ -9,7 +9,7 @@ const fs = require('fs');
 // for (let i = 0; i < 800; i++) {
 // 	let myRandomDot = [i, x]
 // 	x += 0.013
-// 	fs.appendFileSync('shitloadofrandomnumbers.cvs', `${myRandomDot[0]},${myRandomDot[1]}\n`, function (err) {
+// 	fs.appendFileSync('shitloadofrandomnumbers.csv', `${myRandomDot[0]},${myRandomDot[1]}\n`, function (err) {
 // 		if (err) throw err;
 // 		console.log('Saved!');
 // 	});
@@ -22,11 +22,11 @@ if (fs.existsSync("data/")) {
 // const fs = require('fs');
 // let x =0
 // let y =0
-// fs.writeFileSync('data/generated_data.cvs', '');
+// fs.writeFileSync('data/generated_data.csv', '');
 // for (let i = 0; i < 25000; i++) {
 // 	x += 0.009
 // 	y += 0.00017
-// 	fs.appendFileSync('data/generated_data.cvs', `${x.toFixed(2)}/${y.toFixed(4)}\n`, function (err) {
+// 	fs.appendFileSync('data/generated_data.csv', `${x.toFixed(2)}/${y.toFixed(4)}\n`, function (err) {
 // 		if (err) throw err;
 // 		console.log('Saved!');
 // 	});
