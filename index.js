@@ -605,4 +605,4 @@ function log(str) {
     fs.appendFileSync('log.txt', str + "\n");
 }
 
-log("asdf")
+//log("asdf")
