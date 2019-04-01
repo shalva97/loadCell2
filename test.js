@@ -1,13 +1,34 @@
-const fs = require('fs');
 
-for (let i = 0; i < 8000000; i++) {
-	let myRandomDot = [i, Math.floor(Math.random() * 10) + 1]
-	fs.appendFileSync('shitloadofrandomnumbers.cvs', `${myRandomDot[0]},${myRandomDot[1]}\n`, function (err) {
+
+
+
+
+// const fs = require('fs');
+// let x =0
+
+// for (let i = 0; i < 800; i++) {
+// 	let myRandomDot = [i, x]
+// 	x += 0.013
+// 	fs.appendFileSync('shitloadofrandomnumbers.cvs', `${myRandomDot[0]},${myRandomDot[1]}\n`, function (err) {
+// 		if (err) throw err;
+// 		console.log('Saved!');
+// 	});
+// }
+
+
+
+const fs = require('fs');
+let x =0
+let y =0
+fs.writeFileSync('data/generated_data.cvs', '');
+for (let i = 0; i < 25000; i++) {
+	x += 0.009
+	y += 0.00017
+	fs.appendFileSync('data/generated_data.cvs', `${x.toFixed(2)}/${y.toFixed(4)}\n`, function (err) {
 		if (err) throw err;
 		console.log('Saved!');
 	});
 }
-
 
 
 
@@ -30,8 +51,8 @@ for (let i = 0; i < 8000000; i++) {
 // 	chartTitle: "Line chart"
 // };
 
-// for (let i = 0; i < 2000000; i ++) {
-// 	let myRandomDot = [i, Math.floor(Math.random() * 10) + 1]
+// for (let i = 0; i < 2000; i ++) {
+// 	let myRandomDot = [i, Math.floor(Math.random()) + 1]
 // 	opts.fields.push(myRandomDot[0])
 // 	opts.data.Price[myRandomDot[0]] = myRandomDot[1]
 // }
