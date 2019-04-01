@@ -544,8 +544,8 @@ function emulate() {
             console.log("port.write: " + mes)
         }
     }
-    fs.readFile(data.fileSaveDir + "emulation.csv", 'utf8', function (err, contents) {
-    // fs.readFile(data.fileSaveDir + "generated_data.csv", 'utf8', function (err, contents) {
+    //fs.readFile(data.fileSaveDir + "emulation.csv", 'utf8', function (err, contents) {
+     fs.readFile(data.fileSaveDir + "generated_data.csv", 'utf8', function (err, contents) {
         let dataLines = contents.split('\n')
         let timer = setInterval(() => {
             let currentData = dataLines.shift()

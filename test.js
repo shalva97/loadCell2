@@ -20,7 +20,7 @@
 const fs = require('fs');
 let x =0
 let y =0
-fs.writeFileSync('data/generated_data.cvs', '');
+fs.writeFileSync('data/generated_data.csv', '');
 for (let i = 0; i < 25000; i++) {
 	x += 0.009
 	y += 0.00017
