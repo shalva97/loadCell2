@@ -59,7 +59,8 @@ let data = {
     sampleArea: 1.6,
     helpToFilterEverySecondData: false,
     lcv: [0,0,0,0],//shift register for input data, to filter out spikes
-    epv: [0,0,0,0] //shift register for input data, to filter out spikes
+    epv: [0,0,0,0], //shift register for input data, to filter out spikes
+    logData: getFileSaveDirWithTime()
 };
 
 Vue.use(VuejsDialog.main.default, {
@@ -92,9 +93,7 @@ let myVue = new Vue({
                     sigmaEpsilon.redraw();
                     epsilonTime.redraw();
 
-                    let date = new Date(); // Or the date you'd like converted.
-                    let isoDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString();
-                    data.fileSaveDir = "data/" + isoDate.replace(/:/g, "-") + "/"
+                    data.fileSaveDir = getFileSaveDirWithTime()
                     fs.mkdirSync(data.fileSaveDir)
                 })
                 .catch(() => { });
@@ -602,7 +601,15 @@ function DetectSpike(a,b,c){
 
 function log(str) {
     console.log(str)
-    fs.appendFileSync('log.txt', str + "\n");
+    if (!fs.existsSync(data.logData)) {
+        fs.mkdirSync(data.logData)
+    }
+    fs.appendFileSync(data.logData + "log.txt", str + "\n");
 }
 
+function getFileSaveDirWithTime() {
+    let date = new Date()
+    let isoDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString()
+    return "data/" + isoDate.replace(/:/g, "-") + "/"
+}
 //log("asdf")
