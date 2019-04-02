@@ -30,7 +30,9 @@ function connect() {
             });
             parser.on('data', recevedData => {
                 //console.log(recevedData)
-                handleReceivedData(recevedData, port)
+                if (data.record) {
+                    handleReceivedData(recevedData, port)
+                }
             })
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
@@ -61,8 +63,8 @@ let data = {
     chartDataLengthLimit: 10000,
     epsilonFilter: 0.0,
     kgFilter: 0,
-    lcv: [0,0,0,0],//shift register for input data, to filter out spikes
-    epv: [0,0,0,0], //shift register for input data, to filter out spikes
+    lcv: [0, 0, 0, 0],//shift register for input data, to filter out spikes
+    epv: [0, 0, 0, 0], //shift register for input data, to filter out spikes
     logData: getFileSaveDirWithTime()
 };
 
@@ -177,15 +179,15 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
             text: 'Time'
         },
         labels: {
-            formatter: function(){
-              var d = new Date(this.value);
-              let totalHours = this.value/1000/60/60
-            //   let totalHours = 21345234/1000/60/60
-              if (totalHours > 1) {
-                return totalHours.toFixed()+' H, '+d.getMinutes() +':'+ d.getSeconds();
-              } else {
-                  return d.getMinutes() +':'+ d.getSeconds();
-              }
+            formatter: function () {
+                var d = new Date(this.value);
+                let totalHours = this.value / 1000 / 60 / 60
+                //   let totalHours = 21345234/1000/60/60
+                if (totalHours > 1) {
+                    return totalHours.toFixed() + ' H, ' + d.getMinutes() + ':' + d.getSeconds();
+                } else {
+                    return d.getMinutes() + ':' + d.getSeconds();
+                }
             }
         },
         //softMin: 0,
@@ -224,7 +226,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
             str += date.getUTCMinutes() + " minutes ";
             str += date.getUTCSeconds() + " seconds ";
             str += date.getUTCMilliseconds() + " milliseconds ";
-            return '<b>σ (sigma): '+ Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
+            return '<b>σ (sigma): ' + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
         }
     },
     legend: {
@@ -338,15 +340,15 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             text: 'Time'
         },
         labels: {
-            formatter: function(){
-              var d = new Date(this.value);
-              let totalHours = this.value/1000/60/60
-            //   let totalHours = 21345234/1000/60/60
-              if (totalHours > 1) {
-                return totalHours.toFixed()+' H, '+d.getMinutes() +':'+ d.getSeconds();
-              } else {
-                  return d.getMinutes() +':'+ d.getSeconds();
-              }
+            formatter: function () {
+                var d = new Date(this.value);
+                let totalHours = this.value / 1000 / 60 / 60
+                //   let totalHours = 21345234/1000/60/60
+                if (totalHours > 1) {
+                    return totalHours.toFixed() + ' H, ' + d.getMinutes() + ':' + d.getSeconds();
+                } else {
+                    return d.getMinutes() + ':' + d.getSeconds();
+                }
             }
         },
         softMax: 12000,
@@ -382,7 +384,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             str += date.getUTCMinutes() + " minutes ";
             str += date.getUTCSeconds() + " seconds ";
             str += date.getUTCMilliseconds() + " milliseconds ";
-            return '<b> ε (epsilon): '  + Highcharts.numberFormat(this.y, 4) + '</b><br/>' + str;
+            return '<b> ε (epsilon): ' + Highcharts.numberFormat(this.y, 4) + '</b><br/>' + str;
         }
     },
     legend: {
@@ -415,7 +417,14 @@ function myEpicTickPositioner() {
 
 function handleReceivedData(receivedData, port) {
     console.log(receivedData)
-    
+    switch (receivedData) {
+        case "sos2\r":
+            data.record = false //pause btn is disabled
+            Vue.dialog.alert("ნიმუში გაწყდა")
+        case "sos1\r":
+            data.record = false //pause btn is disabled
+            Vue.dialog.alert("ნიმუში გაიწელა 10მმ-ით")
+    }
     //filter every second data
     if (data.helpToFilterEverySecondData) {
         data.helpToFilterEverySecondData = false
@@ -427,44 +436,36 @@ function handleReceivedData(receivedData, port) {
     let [loadCellValue, epsilonValue] = receivedData.split("/");
     loadCellValue = parseFloat(loadCellValue)
     epsilonValue = parseFloat(epsilonValue)
-    
-    
-    
-    
+
     // L O A D C E L L  --  S P I K E S 
     //filtering SPIKES out of real data
-    data.lcv[3]=data.lcv[0] //save the first value, that needs to be sent to pgrogram.
+    data.lcv[3] = data.lcv[0] //save the first value, that needs to be sent to pgrogram.
 
     //shift register
-    data.lcv[0]=data.lcv[1]
-    data.lcv[1]=data.lcv[2]
-    data.lcv[2]=loadCellValue
-        
+    data.lcv[0] = data.lcv[1]
+    data.lcv[1] = data.lcv[2]
+    data.lcv[2] = loadCellValue
+
     //if middle number is garbage
-    if (DetectSpike(data.lcv[0], data.lcv[1], data.lcv[2])){
-        console.log('a : '+data.lcv[0] +       ', b : '+data.lcv[1]+     ', c : '+data.lcv[2])
+    if (DetectSpike(data.lcv[0], data.lcv[1], data.lcv[2])) {
+        console.log('a : ' + data.lcv[0] + ', b : ' + data.lcv[1] + ', c : ' + data.lcv[2])
         data.lcv[1] = data.lcv[2]; //TODO        
     }
 
     //write valid data back to variable
     loadCellValue = data.lcv[3]
-    // L O A D C E L L --  S P I K E S  -- E N D 
 
-
-
-
-    // E P S I L O N  --  S P I K E S  -- S T A R T 
     //filtering SPIKES out of real data
-    data.epv[3]=data.epv[0] //save the first value, that needs to be sent to pgrogram.
+    data.epv[3] = data.epv[0] //save the first value, that needs to be sent to pgrogram.
 
     //shift register
-    data.epv[0]=data.epv[1]
-    data.epv[1]=data.epv[2]
-    data.epv[2]=epsilonValue
-        
+    data.epv[0] = data.epv[1]
+    data.epv[1] = data.epv[2]
+    data.epv[2] = epsilonValue
+
     //if middle number is garbage
-    if (DetectSpike(data.epv[0], data.epv[1], data.epv[2])){
-        console.log('a : '+data.epv[0] +       ', b : '+data.epv[1]+     ', c : '+data.epv[2])
+    if (DetectSpike(data.epv[0], data.epv[1], data.epv[2])) {
+        console.log('a : ' + data.epv[0] + ', b : ' + data.epv[1] + ', c : ' + data.epv[2])
         data.epv[1] = data.epv[2]; //TODO        
     }
 
@@ -474,66 +475,57 @@ function handleReceivedData(receivedData, port) {
 
 
     data.currentKG = loadCellValue
-    if (data.record) {
-        switch (receivedData) {
-            case "sos2\r":
-                data.record = false //pause btn is disabled
-                Vue.dialog.alert("ნიმუში გაწყდა")
-                return
-            case "sos1\r":
-                data.record = false //pause btn is disabled
-                Vue.dialog.alert("ნიმუში გაიწელა 10მმ-ით")
-                return
-        }
 
-        if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
-            port.write("pause\n", (err) => {
-                if (err) {
-                    return console.log('Error on write: ', err.message);
-                }
-                data.isPaused = true; //cont
-            })
-        }
 
-        let p = parseFloat(    (loadCellValue / ((epsilonValue + 1) * data.sampleArea)).toFixed(3)     )
-        let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
-        let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
-        let sigmaEpsilonValues = [epsilonValue, p]
 
-        //write in file
-        fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${sigmaTimeValues[0]},${sigmaTimeValues[1]}\n`)
-        fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
-        fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
-
-        
-        if (sigmaTime.series[0].data.length === 0
-            || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > data.kgFilter    //filter out similar data from display
-                && data.settings[0])) {
-            sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
-            if (sigmaTime.series[0].data.length > data.chartDataLengthLimit) {
-                sigmaTime.series[0].data[0].remove()
+    if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
+        port.write("pause\n", (err) => {
+            if (err) {
+                return console.log('Error on write: ', err.message);
             }
-        }
-
-        if (epsilonTime.series[0].data.length === 0
-            || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > data.epsilonFilter  //filter out similar data from display
-                && data.settings[1])) {
-            epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
-            if (epsilonTime.series[0].data.length > data.chartDataLengthLimit) {
-                epsilonTime.series[0].data[0].remove()
-            }
-        }
-
-        if (sigmaEpsilon.series[0].data.length === 0
-            || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > data.kgFilter
-                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > data.epsilonFilter)  //filter out similar data from display
-                && data.settings[2])) {
-            sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
-            if (sigmaEpsilon.series[0].data.length > data.chartDataLengthLimit)
-                sigmaEpsilon.series[0].data[0].remove()
-        }
-
+            data.isPaused = true; //cont
+        })
     }
+
+    let p = parseFloat((loadCellValue / ((epsilonValue + 1) * data.sampleArea)).toFixed(3))
+    let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
+    let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
+    let sigmaEpsilonValues = [epsilonValue, p]
+
+    //write in file
+    fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${sigmaTimeValues[0]},${sigmaTimeValues[1]}\n`)
+    fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
+    fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
+
+
+    if (sigmaTime.series[0].data.length === 0
+        || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > data.kgFilter    //filter out similar data from display
+            && data.settings[0])) {
+        sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
+        if (sigmaTime.series[0].data.length > data.chartDataLengthLimit) {
+            sigmaTime.series[0].data[0].remove()
+        }
+    }
+
+    if (epsilonTime.series[0].data.length === 0
+        || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > data.epsilonFilter  //filter out similar data from display
+            && data.settings[1])) {
+        epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
+        if (epsilonTime.series[0].data.length > data.chartDataLengthLimit) {
+            epsilonTime.series[0].data[0].remove()
+        }
+    }
+
+    if (sigmaEpsilon.series[0].data.length === 0
+        || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > data.kgFilter
+            || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > data.epsilonFilter)  //filter out similar data from display
+            && data.settings[2])) {
+        sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
+        if (sigmaEpsilon.series[0].data.length > data.chartDataLengthLimit)
+            sigmaEpsilon.series[0].data[0].remove()
+    }
+
+
 }
 
 //chawerili monacemebis maokitxva
@@ -545,7 +537,7 @@ function emulate() {
         }
     }
     fs.readFile(data.fileSaveDir + "emulation.csv", 'utf8', function (err, contents) {
-    // fs.readFile(data.fileSaveDir + "generated_data.csv", 'utf8', function (err, contents) {
+        // fs.readFile(data.fileSaveDir + "generated_data.csv", 'utf8', function (err, contents) {
         let dataLines = contents.split('\n')
         let timer = setInterval(() => {
             let currentData = dataLines.shift()
@@ -590,15 +582,15 @@ function emulate3(n) {
 
 }
 
-function DetectSpike(a,b,c){
+function DetectSpike(a, b, c) {
     let validity_coeff = 2
 
     return (
-        (b >= a*validity_coeff && b >= c*validity_coeff) 
+        (b >= a * validity_coeff && b >= c * validity_coeff)
         ||
-        (b <= a*validity_coeff && b <= c*validity_coeff && b < 0) 
+        (b <= a * validity_coeff && b <= c * validity_coeff && b < 0)
     )
-     
+
 }
 
 function log(str) {
