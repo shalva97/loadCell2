@@ -1,9 +1,24 @@
 //@ts-check
 "use strict";
+// @ts-ignore
 nw.Window.get().showDevTools();
 const SerialPort = require("serialport");
 const ReadLine = SerialPort.parsers.Readline;
 const fs = require('fs');
+
+const s_ZEROSTATE = 0        //0, local cmd
+const s_CALIBRATE_SCALE = 1        //1, special cmd
+const s_START = 2        //2, UI
+const s_PAUSE = 3        //3, UI
+const s_CONTINUE = 4        //4, UI
+const s_STOP = 5        //5, UI
+const s_GOUP = 6        //6, UI
+const s_GODOWN = 7        //7, UI
+const s_PRINT_ADC_DATA = 8        //8, local cmd
+const s_SIMULATE1 = 9        //9, debug cmd
+const s_SIMULATE2 = 10       //10, debug cmd
+const s_SIMULATE3 = 11       //11, debug cmd
+
 let reconnectTimer;
 let port;
 
@@ -23,6 +38,7 @@ function connect() {
             baudRate: 9600
         });
         port.flush(() => {
+            // @ts-ignore
             const parser = new ReadLine();
             port.pipe(parser);
             port.on("open", () => {
@@ -60,12 +76,14 @@ let data = {
     helpToFilterEverySecondData: false,
     chartDataLengthLimit: 10000,
     epsilonFilter: 0.0,
+    validity_coeff: 4,
     kgFilter: 0,
-    lcv: [0,0,0,0],//shift register for input data, to filter out spikes
-    epv: [0,0,0,0], //shift register for input data, to filter out spikes
+    lcv: [0, 0, 0, 0],//shift register for input data, to filter out spikes
+    epv: [0, 0, 0, 0], //shift register for input data, to filter out spikes
     logData: getFileSaveDirWithTime()
 };
 
+// @ts-ignore
 Vue.use(VuejsDialog.main.default, {
     html: true,
     loader: false,
@@ -75,6 +93,7 @@ Vue.use(VuejsDialog.main.default, {
 });
 
 
+// @ts-ignore
 let myVue = new Vue({
     el: "#app",
     data,
@@ -82,9 +101,7 @@ let myVue = new Vue({
         start() {
             this.$dialog.confirm("გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება.")
                 .then(() => {
-                    port.write("down\n", () => {
-                        port.write("start\n")
-                    })
+                    port.write(s_START + "\n")
                     data.zeroValue = Date.now();
                     data.record = true; //pause btn is enabled
 
@@ -106,7 +123,7 @@ let myVue = new Vue({
             if (!data.controllingDCMotorManually) {
                 this.$dialog.confirm("გსურთ ექსპერიმენტის დასრულება?")
                     .then(() => {
-                        port.write("stop\n", (err) => {
+                        port.write(s_STOP + "\n", (err) => {
                             if (err)
                                 return console.log('Error on write: ', err.message);
                             data.record = false; //pause btn is disabled
@@ -116,7 +133,7 @@ let myVue = new Vue({
                     .catch(function () { });
             } else {
                 //manual mode
-                port.write("stop\n", err => {
+                port.write(s_STOP + "\n", err => {
                     if (err) {
                         return console.log('Error on write: ', err.message);
                     }
@@ -129,13 +146,13 @@ let myVue = new Vue({
 
         handlePause() {
             if (data.isPaused) {
-                port.write("start\n", function (err) {
+                port.write(s_CONTINUE + "\n", function (err) {
                     if (err)
                         return console.log('Error on write: ', err.message);
                     data.isPaused = false; //pause
                 });
             } else {
-                port.write("pause\n", function (err) {
+                port.write(s_PAUSE + "\n", function (err) {
                     if (err)
                         return console.log('Error on write: ', err.message);
                     data.isPaused = true; //cont
@@ -144,12 +161,12 @@ let myVue = new Vue({
         },
 
         up() {
-            port.write("up\n");
+            port.write(s_GOUP + "\n");
             this.controllingDCMotorManually = true
         },
 
         down() {
-            port.write("down\n");
+            port.write(s_GODOWN + "\n");
             this.controllingDCMotorManually = true
         }
     },
@@ -158,6 +175,7 @@ let myVue = new Vue({
 
 
 //first chart
+// @ts-ignore
 let sigmaTime = Highcharts.chart('sigmaTime', {
     chart: {
         type: 'spline',
@@ -177,15 +195,15 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
             text: 'Time'
         },
         labels: {
-            formatter: function(){
-              var d = new Date(this.value);
-              let totalHours = this.value/1000/60/60
-            //   let totalHours = 21345234/1000/60/60
-              if (totalHours > 1) {
-                return totalHours.toFixed()+' H, '+d.getMinutes() +':'+ d.getSeconds();
-              } else {
-                  return d.getMinutes() +':'+ d.getSeconds();
-              }
+            formatter: function () {
+                var d = new Date(this.value);
+                let totalHours = this.value / 1000 / 60 / 60
+                //   let totalHours = 21345234/1000/60/60
+                if (totalHours > 1) {
+                    return totalHours.toFixed() + ' H, ' + d.getMinutes() + ':' + d.getSeconds();
+                } else {
+                    return d.getMinutes() + ':' + d.getSeconds();
+                }
             }
         },
         //softMin: 0,
@@ -224,7 +242,8 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
             str += date.getUTCMinutes() + " minutes ";
             str += date.getUTCSeconds() + " seconds ";
             str += date.getUTCMilliseconds() + " milliseconds ";
-            return '<b>σ (sigma): '+ Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
+            // @ts-ignore
+            return '<b>σ (sigma): ' + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
         }
     },
     legend: {
@@ -247,6 +266,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
 
 
 //third chart
+// @ts-ignore
 let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     chart: {
         type: 'spline',
@@ -295,6 +315,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     },
     tooltip: {
         formatter: function () {
+            // @ts-ignore
             const date = new Date(this.x);
             return '<b>ε (epsilon): ' + this.x + '</b><br/>'
                 + '<b>σ (sigma): ' + this.y + '</b>';
@@ -319,6 +340,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
 
 
 //second chart
+// @ts-ignore
 let epsilonTime = Highcharts.chart('epsilonTime', {
     chart: {
         type: 'spline',
@@ -338,15 +360,15 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             text: 'Time'
         },
         labels: {
-            formatter: function(){
-              var d = new Date(this.value);
-              let totalHours = this.value/1000/60/60
-            //   let totalHours = 21345234/1000/60/60
-              if (totalHours > 1) {
-                return totalHours.toFixed()+' H, '+d.getMinutes() +':'+ d.getSeconds();
-              } else {
-                  return d.getMinutes() +':'+ d.getSeconds();
-              }
+            formatter: function () {
+                var d = new Date(this.value);
+                let totalHours = this.value / 1000 / 60 / 60
+                //   let totalHours = 21345234/1000/60/60
+                if (totalHours > 1) {
+                    return totalHours.toFixed() + ' H, ' + d.getMinutes() + ':' + d.getSeconds();
+                } else {
+                    return d.getMinutes() + ':' + d.getSeconds();
+                }
             }
         },
         softMax: 12000,
@@ -382,7 +404,8 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             str += date.getUTCMinutes() + " minutes ";
             str += date.getUTCSeconds() + " seconds ";
             str += date.getUTCMilliseconds() + " milliseconds ";
-            return '<b> ε (epsilon): '  + Highcharts.numberFormat(this.y, 4) + '</b><br/>' + str;
+            // @ts-ignore
+            return '<b> ε (epsilon): ' + Highcharts.numberFormat(this.y, 4) + '</b><br/>' + str;
         }
     },
     legend: {
@@ -415,34 +438,41 @@ function myEpicTickPositioner() {
 
 function handleReceivedData(receivedData, port) {
     console.log(receivedData)
-    
-    //filter every second data
-    if (data.helpToFilterEverySecondData) {
-        data.helpToFilterEverySecondData = false
-        return
-    } else {
-        data.helpToFilterEverySecondData = true
-    }
 
-    let [loadCellValue, epsilonValue] = receivedData.split("/");
-    loadCellValue = parseFloat(loadCellValue)
-    epsilonValue = parseFloat(epsilonValue)
-    
-    
-    
-    
+    // //filter every second data
+    // if (data.helpToFilterEverySecondData) {
+    //     data.helpToFilterEverySecondData = false
+    //     return
+    // } else {
+    //     data.helpToFilterEverySecondData = true
+    // }
+
+    // let [logKeyword, logMessage] = receivedData.split(":");
+    // if (logKeyword != "LOG") {
+        console.log("data received")
+        let [loadCellValue, epsilonValue] = receivedData.split("/");
+        loadCellValue = parseFloat(loadCellValue)
+        epsilonValue = parseFloat(epsilonValue)
+    // }
+    // else{
+    //     console.log("log message received")
+    //     console.log(logKeyword +' '+logMessage)
+    // }
+
+
+
     // L O A D C E L L  --  S P I K E S 
     //filtering SPIKES out of real data
-    data.lcv[3]=data.lcv[0] //save the first value, that needs to be sent to pgrogram.
+    data.lcv[3] = data.lcv[0] //save the first value, that needs to be sent to pgrogram.
 
     //shift register
-    data.lcv[0]=data.lcv[1]
-    data.lcv[1]=data.lcv[2]
-    data.lcv[2]=loadCellValue
-        
+    data.lcv[0] = data.lcv[1]
+    data.lcv[1] = data.lcv[2]
+    data.lcv[2] = loadCellValue
+
     //if middle number is garbage
-    if (DetectSpike(data.lcv[0], data.lcv[1], data.lcv[2])){
-        console.log('a : '+data.lcv[0] +       ', b : '+data.lcv[1]+     ', c : '+data.lcv[2])
+    if (DetectSpike(data.lcv[0], data.lcv[1], data.lcv[2])) {
+        console.log('a : ' + data.lcv[0] + ', b : ' + data.lcv[1] + ', c : ' + data.lcv[2])
         data.lcv[1] = data.lcv[2]; //TODO        
     }
 
@@ -455,16 +485,16 @@ function handleReceivedData(receivedData, port) {
 
     // E P S I L O N  --  S P I K E S  -- S T A R T 
     //filtering SPIKES out of real data
-    data.epv[3]=data.epv[0] //save the first value, that needs to be sent to pgrogram.
+    data.epv[3] = data.epv[0] //save the first value, that needs to be sent to pgrogram.
 
     //shift register
-    data.epv[0]=data.epv[1]
-    data.epv[1]=data.epv[2]
-    data.epv[2]=epsilonValue
-        
+    data.epv[0] = data.epv[1]
+    data.epv[1] = data.epv[2]
+    data.epv[2] = epsilonValue
+
     //if middle number is garbage
-    if (DetectSpike(data.epv[0], data.epv[1], data.epv[2])){
-        console.log('a : '+data.epv[0] +       ', b : '+data.epv[1]+     ', c : '+data.epv[2])
+    if (DetectSpike(data.epv[0], data.epv[1], data.epv[2])) {
+        console.log('a : ' + data.epv[0] + ', b : ' + data.epv[1] + ', c : ' + data.epv[2])
         data.epv[1] = data.epv[2]; //TODO        
     }
 
@@ -478,16 +508,18 @@ function handleReceivedData(receivedData, port) {
         switch (receivedData) {
             case "sos2\r":
                 data.record = false //pause btn is disabled
+                // @ts-ignore
                 Vue.dialog.alert("ნიმუში გაწყდა")
                 return
             case "sos1\r":
                 data.record = false //pause btn is disabled
+                // @ts-ignore
                 Vue.dialog.alert("ნიმუში გაიწელა 10მმ-ით")
                 return
         }
 
         if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
-            port.write("pause\n", (err) => {
+            port.write(s_PAUSE + "\n", (err) => {
                 if (err) {
                     return console.log('Error on write: ', err.message);
                 }
@@ -495,7 +527,7 @@ function handleReceivedData(receivedData, port) {
             })
         }
 
-        let p = parseFloat(    (loadCellValue / ((epsilonValue + 1) * data.sampleArea)).toFixed(3)     )
+        let p = parseFloat((loadCellValue / ((epsilonValue + 1) * data.sampleArea)).toFixed(3))
         let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
         let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
         let sigmaEpsilonValues = [epsilonValue, p]
@@ -505,7 +537,7 @@ function handleReceivedData(receivedData, port) {
         fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
         fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
 
-        
+
         if (sigmaTime.series[0].data.length === 0
             || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > data.kgFilter    //filter out similar data from display
                 && data.settings[0])) {
@@ -537,6 +569,7 @@ function handleReceivedData(receivedData, port) {
 }
 
 //chawerili monacemebis maokitxva
+// @ts-ignore
 function emulate() {
     data.record = true //pause btn is enabled
     port = {
@@ -544,8 +577,9 @@ function emulate() {
             console.log("port.write: " + mes)
         }
     }
+    // @ts-ignore
     fs.readFile(data.fileSaveDir + "emulation.csv", 'utf8', function (err, contents) {
-    // fs.readFile(data.fileSaveDir + "generated_data.csv", 'utf8', function (err, contents) {
+        // fs.readFile(data.fileSaveDir + "generated_data.csv", 'utf8', function (err, contents) {
         let dataLines = contents.split('\n')
         let timer = setInterval(() => {
             let currentData = dataLines.shift()
@@ -560,6 +594,7 @@ function emulate() {
 }
 
 //n monacemis emulireba
+// @ts-ignore
 function emulate2(n) {
     let randomData = []
     for (let i = 0; i < n; i++) {
@@ -572,6 +607,7 @@ function emulate2(n) {
 }
 
 //igive rac zeda, magram delay ti
+// @ts-ignore
 function emulate3(n) {
     let randomData = []
     for (let i = 0; i < n; i++) {
@@ -590,17 +626,17 @@ function emulate3(n) {
 
 }
 
-function DetectSpike(a,b,c){
-    let validity_coeff = 2
+function DetectSpike(a, b, c) {
 
     return (
-        (b >= a*validity_coeff && b >= c*validity_coeff) 
+        (b >= a * validity_coeff && b >= c * validity_coeff)
         ||
-        (b <= a*validity_coeff && b <= c*validity_coeff && b < 0) 
+        (b <= a * validity_coeff && b <= c * validity_coeff && b < 0)
     )
-     
+
 }
 
+// @ts-ignore
 function log(str) {
     console.log(str)
     if (!fs.existsSync(data.logData)) {
