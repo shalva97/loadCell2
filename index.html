@@ -72,20 +72,20 @@
 <body>
     <div id="app">
         <div>
-            <button @click="start" :disabled="record || controllingDCMotorManually || !(settings[0] || settings[1] || settings[2])">Start</button>
-            <button @click="handlePause" :disabled="!record">{{ isPaused ? "Continue" : "Pause" }}</button>
-            <button @click="stop " :disabled="!(record || controllingDCMotorManually)">stop</button>
+            <button @click="start" :disabled="recording || controllingDCMotorManually || !(settings[0] || settings[1] || settings[2])">Start</button>
+            <button @click="handlePause" :disabled="!recording">{{ isPaused ? "Continue" : "Pause" }}</button>
+            <button @click="stop " :disabled="!(recording || controllingDCMotorManually)">stop</button>
 
-            <button class="up" @click="up" :disabled="record || controllingDCMotorManually"></button>
-            <button class="down" @click="down" :disabled="record || controllingDCMotorManually"></button>
+            <button class="up" @click="up" :disabled="recording || controllingDCMotorManually"></button>
+            <button class="down" @click="down" :disabled="recording || controllingDCMotorManually"></button>
             <span> limit in kg({{currentKG}}): </span>
             <input type="text" id="threshold" v-model="threshold" style="width: 40px">
             <span> K: </span>
             <input type="text" id="sampleArea" v-model="sampleArea" style="width: 40px">
 
-            <input type="checkbox" v-model="settings[0]" :disabled="record">&sigma;
-            <input type="checkbox" v-model="settings[1]" :disabled="record">&epsilon;
-            <input type="checkbox" v-model="settings[2]" :disabled="record">&epsilon; | &sigma;
+            <input type="checkbox" v-model="settings[0]" :disabled="recording">&sigma;
+            <input type="checkbox" v-model="settings[1]" :disabled="recording">&epsilon;
+            <input type="checkbox" v-model="settings[2]" :disabled="recording">&epsilon; | &sigma;
             <!--<span style="background-color: #ccc; padding: 0 3px 0 3px">current KG: {{currentKG}}</span>-->
         </div>
         <div class="charts">

@@ -6,18 +6,24 @@ const SerialPort = require("serialport");
 const ReadLine = SerialPort.parsers.Readline;
 const fs = require('fs');
 
-const s_ZEROSTATE = 0        //0, local cmd
-const s_CALIBRATE_SCALE = 1        //1, special cmd
-const s_START = 2        //2, UI
-const s_PAUSE = 3        //3, UI
-const s_CONTINUE = 4        //4, UI
-const s_STOP = 5        //5, UI
-const s_GOUP = 6        //6, UI
-const s_GODOWN = 7        //7, UI
-const s_PRINT_ADC_DATA = 8        //8, local cmd
-const s_SIMULATE1 = 9        //9, debug cmd
-const s_SIMULATE2 = 10       //10, debug cmd
-const s_SIMULATE3 = 11       //11, debug cmd
+// @ts-ignore
+const s_ZEROSTATE = "0\n"        //0, local cmd
+// @ts-ignore
+const s_CALIBRATE_SCALE = "1\n"        //1, special cmd
+const s_START = "2\n"        //2, UI
+const s_PAUSE = "3\n"        //3, UI
+const s_CONTINUE = "4\n"        //4, UI
+const s_STOP = "5\n"        //5, UI
+const s_GOUP = "6\n"        //6, UI
+const s_GODOWN = "7\n"        //7, UI
+// @ts-ignore
+const s_PRINT_ADC_DATA = "8\n"        //8, local cmd
+// @ts-ignore
+const s_SIMULATE1 = "9\n"        //9, debug cmd
+// @ts-ignore
+const s_SIMULATE2 = "10\n"       //10, debug cmd
+// @ts-ignore
+const s_SIMULATE3 = "11\n"       //11, debug cmd
 
 let reconnectTimer;
 let port;
@@ -46,12 +52,16 @@ function connect() {
             });
             parser.on('data', recevedData => {
                 //console.log(recevedData)
+                // if (data.recording) { //commented, so it can read KGs while going up or down manually
                 handleReceivedData(recevedData, port)
+                // }
             })
             port.on('close', function () {
                 clearTimeout(reconnectTimer);
                 reconnectTimer = setTimeout(connect, 4000);
                 console.log("Error: connection closed/კავშირი გაწყდა");
+                data.isPaused = false
+                data.recording = false
             });
             port.on('error', function () {
                 clearTimeout(reconnectTimer);
@@ -64,7 +74,7 @@ function connect() {
 
 //default displayed configs 
 let data = {
-    record: false, //pause btn is disabled
+    recording: false, //pause btn is disabled
     currentKG: 0,
     zeroValue: Date.now(),
     isPaused: false, //pause
@@ -83,6 +93,8 @@ let data = {
     max_allowed_kg: 17,
     max_stress_on_scale: -2,
     max_allowed_stretch: 5,
+    breakKgTreshold: 1,
+    readDataAfterStop: 5, //this many seconds, it will continue reading data
     logData: getFileSaveDirWithTime()
 };
 
@@ -97,6 +109,7 @@ Vue.use(VuejsDialog.main.default, {
 
 
 // @ts-ignore
+// @ts-ignore
 let myVue = new Vue({
     el: "#app",
     data,
@@ -104,23 +117,26 @@ let myVue = new Vue({
         start() {
             this.$dialog.confirm("გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება.")
                 .then(() => {
-                    port.write(s_START + "\n", (err) => {
+                    // port.flush()
+                    data.lcv = [0, 0, 0, 0]
+                    data.epv = [0, 0, 0, 0]
+                    port.write(s_START, (err) => {
                         if (err)
                             return console.log('Error on write: ', err.message);
-                    });
-                    data.zeroValue = Date.now();
-                    data.record = true; //pause btn is enabled
+                        data.zeroValue = Date.now();
+                        data.recording = true; //pause btn is enabled
 
-                    sigmaTime.series[0].setData([]);
-                    sigmaEpsilon.series[0].setData([]);
-                    epsilonTime.series[0].setData([]);
+                        sigmaTime.series[0].setData([]);
+                        sigmaEpsilon.series[0].setData([]);
+                        epsilonTime.series[0].setData([]);
 
-                    sigmaTime.redraw();
-                    sigmaEpsilon.redraw();
-                    epsilonTime.redraw();
+                        sigmaTime.redraw();
+                        sigmaEpsilon.redraw();
+                        epsilonTime.redraw();
 
-                    data.fileSaveDir = getFileSaveDirWithTime()
-                    fs.mkdirSync(data.fileSaveDir)
+                        data.fileSaveDir = getFileSaveDirWithTime()
+                        fs.mkdirSync(data.fileSaveDir)
+                    })
                 })
                 .catch(() => { });
         },
@@ -129,21 +145,23 @@ let myVue = new Vue({
             if (!data.controllingDCMotorManually) {
                 this.$dialog.confirm("გსურთ ექსპერიმენტის დასრულება?")
                     .then(() => {
-                        port.write(s_STOP + "\n", (err) => {
+                        port.write(s_STOP, (err) => {
                             if (err)
                                 return console.log('Error on write: ', err.message);
-                            data.record = false; //pause btn is disabled
-                            data.isPaused = false //pause appears
-                        });
+                            data.isPaused = false //pause appears 
+                            setTimeout(() => {
+                                data.recording = false; //pause btn is disabled
+                            }, data.readDataAfterStop * 1000)
+                        })
                     })
                     .catch(function () { });
             } else {
                 //manual mode
-                port.write(s_STOP + "\n", err => {
+                port.write(s_STOP, err => {
                     if (err) {
                         return console.log('Error on write: ', err.message);
                     }
-                    data.record = false //pause btn is disabled
+                    data.recording = false //pause btn is disabled
                     data.controllingDCMotorManually = false
                     data.isPaused = false //pause appears
                 })
@@ -152,13 +170,13 @@ let myVue = new Vue({
 
         handlePause() {
             if (data.isPaused) {
-                port.write(s_CONTINUE + "\n", function (err) {
+                port.write(s_CONTINUE, function (err) {
                     if (err)
                         return console.log('Error on write: ', err.message);
                     data.isPaused = false; //pause
                 });
             } else {
-                port.write(s_PAUSE + "\n", function (err) {
+                port.write(s_PAUSE, function (err) {
                     if (err)
                         return console.log('Error on write: ', err.message);
                     data.isPaused = true; //cont
@@ -167,12 +185,12 @@ let myVue = new Vue({
         },
 
         up() {
-            port.write(s_GOUP + "\n");
+            port.write(s_GOUP);
             this.controllingDCMotorManually = true
         },
 
         down() {
-            port.write(s_GODOWN + "\n");
+            port.write(s_GODOWN);
             this.controllingDCMotorManually = true
         }
     },
@@ -275,7 +293,8 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
 // @ts-ignore
 let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     chart: {
-        type: 'spline',
+        // type: 'spline',
+        type: 'scatter',
         animation: false,
         marginRight: 10,
         zoomType: "xy"
@@ -316,11 +335,13 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
             marker: {
                 enabled: false
             },
+            lineWidth: 2,
             color: "red"
         }
     },
     tooltip: {
         formatter: function () {
+            // @ts-ignore
             // @ts-ignore
             const date = new Date(this.x);
             return '<b>ε (epsilon): ' + this.x + '</b><br/>'
@@ -392,7 +413,16 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             color: '#808080'
         }],
         gridLineColor: 'gray',
-        tickPositioner: myEpicTickPositioner
+        tickPositioner: function () {
+            let tickIntervals = []
+            // let max = this.dataMax + 4
+            // let incrementBy = max > 12 ? 2 : 1
+            for (let i = 0; i < this.dataMax + 0.3; i += 0.1) {
+                tickIntervals.push(parseFloat(i.toFixed(1)))
+            }
+            // console.log(tickIntervals)
+            return tickIntervals;
+        },
     },
     plotOptions: {
         series: {
@@ -451,27 +481,34 @@ function handleReceivedData(receivedData, port) {
 
 
     data.currentKG = loadCellValue
-    if (data.record) {
+    if (data.recording) {
         switch (receivedData) {
             case "sos3\r":
-                data.record = false //pause btn is disabled
+                // data.recording = false //pause btn is disabled
+                // @ts-ignore
+                data.isPaused = true
                 // @ts-ignore
                 Vue.dialog.alert("მოდებულმა ძალამ/კგ გადააჭარბა " + data.max_allowed_kg + "-ს")
                 return
             case "sos2\r":
-                data.record = false //pause btn is disabled
+                // data.recording = false //pause btn is disabled
+                // @ts-ignore
+                data.isPaused = true
                 // @ts-ignore
                 Vue.dialog.alert("სასწორმა მიიღო " + data.max_stress_on_scale + " კგ დაწოლა")
                 return
             case "sos1\r":
-                data.record = false //pause btn is disabled
+                // data.recording = false //pause btn is disabled
+                // @ts-ignore
+                data.isPaused = true
                 // @ts-ignore
                 Vue.dialog.alert("ნიმუში გაიწელა " + data.max_allowed_stretch + " მმ ით")
                 return
         }
 
+        //pause if equal to specified value, default:10
         if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
-            port.write(s_PAUSE + "\n", (err) => {
+            port.write(s_PAUSE, (err) => {
                 if (err) {
                     return console.log('Error on write: ', err.message);
                 }
@@ -482,49 +519,61 @@ function handleReceivedData(receivedData, port) {
         // L O A D C E L L  --  S P I K E S 
         //filtering SPIKES out of real data
         data.lcv[3] = data.lcv[0] //save the first value, that needs to be sent to pgrogram.
-
         //shift register
         data.lcv[0] = data.lcv[1]
         data.lcv[1] = data.lcv[2]
         data.lcv[2] = loadCellValue
-
-
         //if middle number is garbage,
         if (DetectSpike(data.lcv[0], data.lcv[1], data.lcv[2])) {
             console.log("fake-spike SCALE ADC: " + data.lcv[0] + ' ' + data.lcv[1] + ' ' + data.lcv[2])
-            data.lcv[1] = (data.lcv[2]+data.lcv[0])/2;
+            data.lcv[1] = (data.lcv[2] + data.lcv[0]) / 2;
         }
-
         //write valid data back to variable
         loadCellValue = data.lcv[3]
         // L O A D C E L L --  S P I K E S  -- E N D 
 
-
-
         // E P S I L O N  --  S P I K E S  -- S T A R T 
         //filtering SPIKES out of real data
         data.epv[3] = data.epv[0] //save the first value, that needs to be sent to pgrogram.
-
         //shift register
         data.epv[0] = data.epv[1]
         data.epv[1] = data.epv[2]
         data.epv[2] = epsilonValue
-
         //if middle number is garbage
         if (DetectSpike(data.epv[0], data.epv[1], data.epv[2])) {
             console.log("fake-spike on Extensometer ADC: " + data.epv[0] + ' ' + data.epv[1] + ' ' + data.epv[2])
-            data.epv[1] = (data.epv[2]+data.epv[0])/2;        
+            data.epv[1] = (data.epv[2] + data.epv[0]) / 2;
         }
-
         //write valid data back to variable
         epsilonValue = data.epv[3]
         // E P S I L O N  --  S P I K E S  -- E N D 
 
 
+        // CHECK FOR SAMPLE BREAK
+        //lcv[0] is older data, lcv[1] is newer data
+        if (data.lcv[0] - data.lcv[1] > 1) {
+            port.write(s_STOP, (err) => {
+                if (err)
+                    return console.log('Error on write: ', err.message);
+                data.isPaused = false //pause appears 
+                // @ts-ignore
+                Vue.dialog.alert("ნიმუში გაწყდა / წონა დავარდა " + data.breakKgTreshold + " კგ-ზე მეტით")
+                setTimeout(() => {
+                    data.recording = false; //pause btn is disabled
+                }, data.readDataAfterStop * 1000)
+            })
+        }
+
+
+        //TODO: epsilon && scale calibration check  
         //TODO: code to detect breaking of an sample
-        //TODO: code to properly display received values
+
+        ////////////////DONE
         //TODO: if can't execute writes, don't mark buttons as pressed.
-        //TODO: change reset zoom location
+        //TODO: change reset zoom location - CANCELED
+        //TODO: clear old data - CANCELED
+        //TODO: save 20 data on stop - DONE
+        //TODO: code to properly display received values float precision - DONE
 
         let p = parseFloat((loadCellValue / ((epsilonValue + 1) * data.sampleArea)).toFixed(3))
         let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
@@ -569,13 +618,15 @@ function handleReceivedData(receivedData, port) {
 
 //chawerili monacemebis maokitxva
 // @ts-ignore
+// @ts-ignore
 function emulate() {
-    data.record = true //pause btn is enabled
+    data.recording = true //pause btn is enabled
     port = {
         write(mes) {
             console.log("port.write: " + mes)
         }
     }
+    // @ts-ignore
     // @ts-ignore
     fs.readFile(data.fileSaveDir + "emulation.csv", 'utf8', function (err, contents) {
         // fs.readFile(data.fileSaveDir + "generated_data.csv", 'utf8', function (err, contents) {
@@ -594,6 +645,7 @@ function emulate() {
 
 //n monacemis emulireba
 // @ts-ignore
+// @ts-ignore
 function emulate2(n) {
     let randomData = []
     for (let i = 0; i < n; i++) {
@@ -606,6 +658,7 @@ function emulate2(n) {
 }
 
 //igive rac zeda, magram delay ti
+// @ts-ignore
 // @ts-ignore
 function emulate3(n) {
     let randomData = []
@@ -643,6 +696,7 @@ function DetectSpike(a, b, c) {
 
 }
 
+// @ts-ignore
 // @ts-ignore
 function log(str) {
     console.log(str)
