@@ -61,7 +61,7 @@ void setup()
 
   adc_zlbs.begin(A3, A2);         //set pinouts
   adc_zlbs.set_scale(scale_zlbs); //147 comes from initial calibration
-  log("Setup Complete");
+  // log("Setup Complete");
 }
 
 //---------------------------loop()---------------------------------------------------------------//
@@ -75,15 +75,19 @@ void loop()
     break;
 
   case CALIBRATE_SCALE:
-    log("calibrate scale state");
+    // log("calibrate scale state");
     state = ZEROSTATE;
     F_Calibrate_Scale();
     break;
 
   case START:
-    log("start state");
+    // log("start state");
     if (sos1 != true and sos3 != true)
     {
+      pre_KG =0;
+      pre_MM =0;
+      cur_KG =0;
+      cur_MM =0;
       state = PRINT_ADC_DATA;
       F_Calibrate_Epsilon();
       digitalWrite(relay_pin1, HIGH);
@@ -92,14 +96,14 @@ void loop()
     break;
 
   case PAUSE:
-    log("pause state");
+    // log("pause state");
     state = PRINT_ADC_DATA;
     digitalWrite(relay_pin1, LOW);
     digitalWrite(relay_pin2, LOW);
     break;
 
   case CONTINUE:
-    log("continue state");
+    // log("continue state");
     if (sos1 != true and sos3 != true)
     {
       state = PRINT_ADC_DATA;
@@ -109,7 +113,7 @@ void loop()
     break;
 
   case STOP:
-    log("stop state");
+    // log("stop state");
     state = ZEROSTATE;
     digitalWrite(relay_pin1, LOW);
     digitalWrite(relay_pin2, LOW);
@@ -117,7 +121,7 @@ void loop()
     break;
 
   case GOUP:
-    log("go up state");
+    // log("go up state");
     if (sos1 != true and sos3 != true)
     {
       state = PRINT_ADC_DATA;
@@ -127,7 +131,7 @@ void loop()
     break;
 
   case GODOWN:
-    log("go down state");
+    // log("go down state");
     if (sos2 != true)
     {
       state = PRINT_ADC_DATA;
@@ -139,62 +143,63 @@ void loop()
   case PRINT_ADC_DATA:
     F_read_from_Scale();
     F_read_from_Epsilon();
-    Serial.println((String)cur_KG + '/' + (String)cur_MM);
+    Serial.print(cur_KG,3);
+    Serial.print('/');
+    Serial.print(cur_MM,5);
+    Serial.print('\n');
     break;
 
   case SIMULATE1:
-    log("simulate 1 state");
+    // log("simulate 1 state");
     break;
 
   case SIMULATE2:
-    log("simulate 2 state");
+    // log("simulate 2 state");
     break;
 
   case SIMULATE3:
-    log("simulate 3 state");
+    // log("simulate 3 state");
     break;
 
   default:
-    log("Unknown Command");
+    // log("Unknown Command");
     break;
   }
 
   // --------------------- declare sos* as true if safety rules are violated, if not, clear them ---------------------
   if ((pre_MM > max_MM) and (cur_MM > max_MM) and (sos1 == false)) //too much stretch, but not yet detected
   {
-    log("sos 1 state");
+    // log("sos 1 state");
     Serial.println("sos1");
     sos1 = true;
-    state = ZEROSTATE;
+    state = PRINT_ADC_DATA;
     digitalWrite(relay_pin1, LOW);
     digitalWrite(relay_pin2, LOW);
-    F_printNreadings();
+    
   }
   if ((pre_MM < max_MM) and (cur_MM < max_MM))
     sos1 = false;
 
   if ((pre_KG < min_KG) and (cur_KG < min_KG) and (sos2 == false)) //negative KGs, but not yet detected
   {
-    log("sos 2 state");
+    // log("sos 2 state");
     Serial.println("sos2");
     sos2 = true;
-    state = ZEROSTATE;
+    state = PRINT_ADC_DATA;
     digitalWrite(relay_pin1, LOW);
     digitalWrite(relay_pin2, LOW);
-    F_printNreadings();
   }
   if ((pre_KG > min_KG) and (cur_KG > min_KG))
     sos2 = false;
 
   if ((pre_KG > max_KG) and (cur_KG > max_KG) and (sos3 == false)) //too much KGs, but not yet detected
   {
-    log("sos 3 state");
+    // log("sos 3 state");
     Serial.println("sos3");
     sos3 = true;
-    state = ZEROSTATE;
+    state = PRINT_ADC_DATA;
     digitalWrite(relay_pin1, LOW);
     digitalWrite(relay_pin2, LOW);
-    F_printNreadings();
   }
   if ((pre_KG < max_KG) and (cur_KG < max_KG))
     sos3 = false;
@@ -273,12 +278,20 @@ void F_printNreadings()
   {
     F_read_from_Scale();
     F_read_from_Epsilon();
-    Serial.println((String)cur_KG + '/' + (String)cur_MM);
+    Serial.print(cur_KG,3);
+    Serial.print('/');
+    Serial.print(cur_MM,5);
+    Serial.print('\n');   
     delay(print_delay);
   }
 }
 
-void log(String x)
-{
-  // Serial.println("LOG: " + x);
-}
+// void log(String x)
+// {
+//   Serial.println("LOG: " + x);
+// }
+
+// void log2(String x)
+// {
+//   Serial.println("LOG: " + x);
+// }
