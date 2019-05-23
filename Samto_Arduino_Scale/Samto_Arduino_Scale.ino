@@ -25,7 +25,7 @@ bool sos = false;
 bool sos1 = false;
 bool sos2 = false;
 bool sos3 = false;
-int lastNofReadings = 10; //print data sosCountLimit times after sos
+int lastNofReadings = 20; //print data sosCountLimit times after sos
 int max_KG = 17;          //max allowed KG for Scale, prints sos after that, and puts fsm into STOP state
 int max_MM = 5;           //max allowed MM for Epsilon, prints sos after that, and puts fsm into STOP state
 int min_KG = -2;          //min allowed KG, so it will not push down, SHOULD be less than pre_KG and cur_KG
@@ -73,7 +73,7 @@ void loop()
   // Serial.println(interval_counter);
   // Serial.println(millis());
   // 500             <    3101    2600
-  delay(5);
+  //delay(5);
   if (interval <= (millis() - interval_counter))
   {
     // Serial.println("ENTERED CONDITION");
@@ -304,7 +304,7 @@ void F_printNreadings()
     Serial.print('/');
     Serial.print(cur_MM, 5);
     Serial.print('\n');
-    delay(interval);
+    delay(interval/5);
   }
 }
 
