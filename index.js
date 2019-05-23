@@ -266,7 +266,6 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
             str += date.getUTCMinutes() + " minutes ";
             str += date.getUTCSeconds() + " seconds ";
             str += date.getUTCMilliseconds() + " milliseconds ";
-            // @ts-ignore
             return '<b>σ (sigma): ' + Highcharts.numberFormat(this.y, 2) + '</b><br/>' + str;
         }
     },
@@ -440,7 +439,6 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
             str += date.getUTCMinutes() + " minutes ";
             str += date.getUTCSeconds() + " seconds ";
             str += date.getUTCMilliseconds() + " milliseconds ";
-            // @ts-ignore
             return '<b> ε (epsilon): ' + Highcharts.numberFormat(this.y, 4) + '</b><br/>' + str;
         }
     },
@@ -597,25 +595,54 @@ function handleReceivedData(receivedData, port) {
             }
         }
 
-        if (epsilonTime.series[0].data.length === 0
-            || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > data.epsilonFilter  //filter out similar data from display
-                && data.settings[1])) {
-            epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
-            if (epsilonTime.series[0].data.length > data.chartDataLengthLimit) {
-                epsilonTime.series[0].data[0].remove()
+    if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
+        port.write("pause\n", (err) => {
+            if (err) {
+                return console.log('Error on write: ', err.message);
             }
-        }
-
-        if (sigmaEpsilon.series[0].data.length === 0
-            || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > data.kgFilter
-                || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > data.epsilonFilter)  //filter out similar data from display
-                && data.settings[2])) {
-            sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
-            if (sigmaEpsilon.series[0].data.length > data.chartDataLengthLimit)
-                sigmaEpsilon.series[0].data[0].remove()
-        }
-
+            data.isPaused = true; //cont
+        })
     }
+
+    let p = parseFloat((loadCellValue / ((epsilonValue + 1) * data.sampleArea)).toFixed(3))
+    let sigmaTimeValues = [(new Date()).getTime() - data.zeroValue, p]
+    let epsilonTimeValues = [(new Date()).getTime() - data.zeroValue, epsilonValue]
+    let sigmaEpsilonValues = [epsilonValue, p]
+
+    //write in file
+    fs.appendFileSync(data.fileSaveDir + "sigmaTime.csv", `${sigmaTimeValues[0]},${sigmaTimeValues[1]}\n`)
+    fs.appendFileSync(data.fileSaveDir + "epsilonTime.csv", `${epsilonTimeValues[0]},${epsilonTimeValues[1]}\n`)
+    fs.appendFileSync(data.fileSaveDir + "sigmaEpsilon.csv", `${sigmaEpsilonValues[0]},${sigmaEpsilonValues[1]}\n`)
+
+
+    if (sigmaTime.series[0].data.length === 0
+        || (Math.abs(sigmaTime.series[0].data[sigmaTime.series[0].data.length - 1].y - p) > data.kgFilter    //filter out similar data from display
+            && data.settings[0])) {
+        sigmaTime.series[0].addPoint(sigmaTimeValues, true, false);
+        if (sigmaTime.series[0].data.length > data.chartDataLengthLimit) {
+            sigmaTime.series[0].data[0].remove()
+        }
+    }
+
+    if (epsilonTime.series[0].data.length === 0
+        || (Math.abs(epsilonTime.series[0].data[epsilonTime.series[0].data.length - 1].y - epsilonValue) > data.epsilonFilter  //filter out similar data from display
+            && data.settings[1])) {
+        epsilonTime.series[0].addPoint(epsilonTimeValues, true, false);
+        if (epsilonTime.series[0].data.length > data.chartDataLengthLimit) {
+            epsilonTime.series[0].data[0].remove()
+        }
+    }
+
+    if (sigmaEpsilon.series[0].data.length === 0
+        || ((Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].y - p) > data.kgFilter
+            || Math.abs(sigmaEpsilon.series[0].data[sigmaEpsilon.series[0].data.length - 1].x - epsilonValue) > data.epsilonFilter)  //filter out similar data from display
+            && data.settings[2])) {
+        sigmaEpsilon.series[0].addPoint(sigmaEpsilonValues, true, false)
+        if (sigmaEpsilon.series[0].data.length > data.chartDataLengthLimit)
+            sigmaEpsilon.series[0].data[0].remove()
+    }
+
+
 }
 
 //chawerili monacemebis maokitxva
