@@ -1,29 +1,29 @@
 //@ts-check
 "use strict";
 // @ts-ignore
-// nw.Window.get().showDevTools(); //Disable chrome debugger
+nw.Window.get().showDevTools();
 const SerialPort = require("serialport");
 const ReadLine = SerialPort.parsers.Readline;
 const fs = require('fs');
 
 // @ts-ignore
-const s_ZEROSTATE = "0"        //0, local cmd
+const s_ZEROSTATE = "0\n"        //0, local cmd
 // @ts-ignore
-const s_CALIBRATE_SCALE = "1"        //1, special cmd
-const s_START = "2"        //2, UI
-const s_PAUSE = "3"        //3, UI
-const s_CONTINUE = "4"        //4, UI
-const s_STOP = "5"        //5, UI
-const s_GOUP = "6"        //6, UI
-const s_GODOWN = "7"        //7, UI
+const s_CALIBRATE_SCALE = "1\n"        //1, special cmd
+const s_START = "2\n"        //2, UI
+const s_PAUSE = "3\n"        //3, UI
+const s_CONTINUE = "4\n"        //4, UI
+const s_STOP = "5\n"        //5, UI
+const s_GOUP = "6\n"        //6, UI
+const s_GODOWN = "7\n"        //7, UI
 // @ts-ignore
-const s_PRINT_ADC_DATA = "8"        //8, local cmd
+const s_PRINT_ADC_DATA = "8\n"        //8, local cmd
 // @ts-ignore
-const s_SIMULATE1 = "9"        //9, debug cmd
+const s_SIMULATE1 = "9\n"        //9, debug cmd
 // @ts-ignore
-const s_SIMULATE2 = "10"       //10, debug cmd
+const s_SIMULATE2 = "10\n"       //10, debug cmd
 // @ts-ignore
-const s_SIMULATE3 = "11"       //11, debug cmd
+const s_SIMULATE3 = "11\n"       //11, debug cmd
 
 let reconnectTimer;
 let port;
@@ -90,11 +90,11 @@ let data = {
     kgFilter: 0,
     lcv: [0, 0, 0, 0],//shift register for input data, to filter out spikes
     epv: [0, 0, 0, 0], //shift register for input data, to filter out spikes
-    max_allowed_kg: 20,
+    max_allowed_kg: 17,
     max_stress_on_scale: -2,
     max_allowed_stretch: 5,
-    breakKgTreshold: 2,
-    readDataAfterStop: 2, //this many seconds, it will continue reading data
+    breakKgTreshold: 1,
+    readDataAfterStop: 5, //this many seconds, it will continue reading data
     logData: getFileSaveDirWithTime()
 };
 
@@ -236,7 +236,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
     },
     yAxis: {
         title: {
-            text: 'σ'
+            text: 'σ (sigma)'
         },
         min: -1,
         softMax: 4,
@@ -307,7 +307,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     },
     xAxis: {
         title: {
-            text: 'ε'
+            text: 'ε (epsilon)'
         },
         //min: -1,
         softMax: 0.5,
@@ -317,7 +317,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     yAxis: {
         tickInterval: 2,
         title: {
-            text: 'σ'
+            text: 'σ (sigma)'
         },
         //min: -5,
         softMax: 4,
@@ -402,7 +402,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
     },
     yAxis: {
         title: {
-            text: 'ε'
+            text: 'ε (epsilon)'
         },
         softmin: 0, //TS
         softMax: 1,
@@ -562,13 +562,11 @@ function handleReceivedData(receivedData, port) {
             })
         }
 
-        ////////////////TOBEDONE
-        //TODO: implement s_SOS command in which arduino will print 20 datas, so that s_STOP will work normally
-        
-        ////////////////DONE
-        //TODO: scale calibration check  
-        //TODO: epsilon  calibration check  
+
+        //TODO: epsilon && scale calibration check  
         //TODO: code to detect breaking of an sample
+
+        ////////////////DONE
         //TODO: if can't execute writes, don't mark buttons as pressed.
         //TODO: change reset zoom location - CANCELED
         //TODO: clear old data - CANCELED
