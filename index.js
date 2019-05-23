@@ -7,23 +7,23 @@ const ReadLine = SerialPort.parsers.Readline;
 const fs = require('fs');
 
 // @ts-ignore
-const s_ZEROSTATE = "0\n"        //0, local cmd
+const s_ZEROSTATE = "0"        //0, local cmd
 // @ts-ignore
-const s_CALIBRATE_SCALE = "1\n"        //1, special cmd
-const s_START = "2\n"        //2, UI
-const s_PAUSE = "3\n"        //3, UI
-const s_CONTINUE = "4\n"        //4, UI
-const s_STOP = "5\n"        //5, UI
-const s_GOUP = "6\n"        //6, UI
-const s_GODOWN = "7\n"        //7, UI
+const s_CALIBRATE_SCALE = "1"        //1, special cmd
+const s_START = "2"        //2, UI
+const s_PAUSE = "3"        //3, UI
+const s_CONTINUE = "4"        //4, UI
+const s_STOP = "5"        //5, UI
+const s_GOUP = "6"        //6, UI
+const s_GODOWN = "7"        //7, UI
 // @ts-ignore
-const s_PRINT_ADC_DATA = "8\n"        //8, local cmd
+const s_PRINT_ADC_DATA = "8"        //8, local cmd
 // @ts-ignore
-const s_SIMULATE1 = "9\n"        //9, debug cmd
+const s_SIMULATE1 = "9"        //9, debug cmd
 // @ts-ignore
-const s_SIMULATE2 = "10\n"       //10, debug cmd
+const s_SIMULATE2 = "10"       //10, debug cmd
 // @ts-ignore
-const s_SIMULATE3 = "11\n"       //11, debug cmd
+const s_SIMULATE3 = "11"       //11, debug cmd
 
 let reconnectTimer;
 let port;
