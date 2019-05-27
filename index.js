@@ -84,7 +84,7 @@ let data = {
     fileSaveDir: "./data/",
     sampleArea: 1.6,
     helpToFilterEverySecondData: false,
-    chartDataLengthLimit: 10000,
+    chartDataLengthLimit: 5400,
     epsilonFilter: 0.0,
     validityCoeff: 0.5, //1+validityCoeff, 1-validityCoeff
     kgFilter: 0,
@@ -560,10 +560,10 @@ function handleReceivedData(receivedData, port) {
         }
 
 
-        //TODO: epsilon && scale calibration check  
-        //TODO: code to detect breaking of an sample
-
+        
         ////////////////DONE
+        //TODO: code to detect breaking of an sample
+        //TODO: epsilon && scale calibration check  
         //TODO: if can't execute writes, don't mark buttons as pressed.
         //TODO: change reset zoom location - CANCELED
         //TODO: clear old data - CANCELED
