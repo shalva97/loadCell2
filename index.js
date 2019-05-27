@@ -216,18 +216,14 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
     },
     xAxis: {
         title: {
-            text: 'Time'
+            text: 'Time [Days, Hours, Minutes : Seconds]'
         },
         labels: {
             formatter: function () {
                 var d = new Date(this.value);
                 let totalHours = this.value / 1000 / 60 / 60
-                //   let totalHours = 21345234/1000/60/60
-                if (totalHours > 1) {
-                    return totalHours.toFixed() + ' H, ' + d.getMinutes() + ':' + d.getSeconds();
-                } else {
-                    return d.getMinutes() + ':' + d.getSeconds();
-                }
+                let totalDays = totalHours / 24
+                    return totalDays.toFixed() +', ' + (totalHours-24*totalDays).toFixed() + ', ' + d.getMinutes() + ':' + d.getSeconds();
             }
         },
         //softMin: 0,
@@ -384,18 +380,14 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
     },
     xAxis: {
         title: {
-            text: 'Time'
+            text: 'Time [Days, Hours, Minutes : Seconds]'
         },
         labels: {
             formatter: function () {
                 var d = new Date(this.value);
                 let totalHours = this.value / 1000 / 60 / 60
-                //   let totalHours = 21345234/1000/60/60
-                if (totalHours > 1) {
-                    return totalHours.toFixed() + ' H, ' + d.getMinutes() + ':' + d.getSeconds();
-                } else {
-                    return d.getMinutes() + ':' + d.getSeconds();
-                }
+                let totalDays = totalHours / 24
+                    return totalDays.toFixed() +', ' + (totalHours-24*totalDays).toFixed() + ', ' + d.getMinutes() + ':' + d.getSeconds();
             }
         },
         softMax: 12000,
