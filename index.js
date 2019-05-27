@@ -232,7 +232,8 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
     },
     yAxis: {
         title: {
-            text: 'σ (sigma)'
+            text: 'σ',
+            rotation: 0
         },
         min: -1,
         softMax: 4,
@@ -304,7 +305,7 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     },
     xAxis: {
         title: {
-            text: 'ε (epsilon)'
+            text: 'ε'
         },
         //min: -1,
         softMax: 0.5,
@@ -314,7 +315,8 @@ let sigmaEpsilon = Highcharts.chart('sigmaEpsilon', {
     yAxis: {
         tickInterval: 2,
         title: {
-            text: 'σ (sigma)'
+            text: 'σ',
+            rotation: 0
         },
         //min: -5,
         softMax: 4,
@@ -395,7 +397,8 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
     },
     yAxis: {
         title: {
-            text: 'ε (epsilon)'
+            text: 'ε',
+            rotation: 0
         },
         softmin: 0, //TS
         softMax: 1,
