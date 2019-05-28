@@ -96,7 +96,8 @@ let data = {
     max_allowed_stretch: 5,
     breakKgTreshold: 1,
     readDataAfterStop: 5, //this many seconds, it will continue reading data
-    logData: getFileSaveDirWithTime()
+    logData: getFileSaveDirWithTime(),
+    pullingDirection: ""
 };
 
 // @ts-ignore
@@ -108,8 +109,6 @@ Vue.use(VuejsDialog.main.default, {
     animation: 'bounce',
 });
 
-
-// @ts-ignore
 // @ts-ignore
 let myVue = new Vue({
     el: "#app",
@@ -119,6 +118,7 @@ let myVue = new Vue({
             this.$dialog.confirm("გსურთ დაიწყოთ ექსპერიმენტი? პროგრამაში არსებული მონაცემები წაიშლება.")
                 .then(() => {
                     // port.flush()
+                    data.pullingDirection = "up"
                     data.lcv = [0, 0, 0, 0]
                     data.epv = [0, 0, 0, 0]
                     port.write(s_START, (err) => {
@@ -171,11 +171,24 @@ let myVue = new Vue({
 
         handlePause() {
             if (data.isPaused) {
-                port.write(s_CONTINUE, function (err) {
-                    if (err)
-                        return console.log('Error on write: ', err.message);
-                    data.isPaused = false; //pause
-                });
+                if (data.currentKG > parseFloat(data.threshold)) {
+                    port.write(s_GODOWN, function (err) {
+                        if (err) {
+                            data.pullingDirection = "down"
+                            return console.log('Error on write: ', err.message);
+                        }
+                        data.isPaused = false; //pause
+                    });
+                } else {
+                    port.write(s_CONTINUE, function (err) {
+                        if (err) {
+                            data.pullingDirection = "up"
+                            return console.log('Error on write: ', err.message);
+                        }
+                        data.isPaused = false; //pause
+                    });
+                }
+
             } else {
                 port.write(s_PAUSE, function (err) {
                     if (err)
@@ -224,7 +237,7 @@ let sigmaTime = Highcharts.chart('sigmaTime', {
                 var d = new Date(this.value);
                 let totalHours = this.value / 1000 / 60 / 60
                 let totalDays = totalHours / 24
-                    return totalDays.toFixed() +', ' + (totalHours-24*totalDays).toFixed() + ', ' + d.getMinutes() + ':' + d.getSeconds();
+                return totalDays.toFixed() + ', ' + (totalHours - 24 * totalDays).toFixed() + ', ' + d.getMinutes() + ':' + d.getSeconds();
             }
         },
         //softMin: 0,
@@ -390,7 +403,7 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
                 var d = new Date(this.value);
                 let totalHours = this.value / 1000 / 60 / 60
                 let totalDays = totalHours / 24
-                    return totalDays.toFixed() +', ' + (totalHours-24*totalDays).toFixed() + ', ' + d.getMinutes() + ':' + d.getSeconds();
+                return totalDays.toFixed() + ', ' + (totalHours - 24 * totalDays).toFixed() + ', ' + d.getMinutes() + ':' + d.getSeconds();
             }
         },
         softMax: 12000,
@@ -469,7 +482,7 @@ function myEpicTickPositioner() {
 }
 
 function handleReceivedData(receivedData, port) {
-    console.log("RECEIVED: " + receivedData)
+    //console.log("RECEIVED: " + receivedData)
 
     let [loadCellValue, epsilonValue] = receivedData.split("/");
     loadCellValue = parseFloat(loadCellValue)
@@ -503,7 +516,9 @@ function handleReceivedData(receivedData, port) {
         }
 
         //pause if equal to specified value, default:10
-        if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
+        if ((data.pullingDirection === "up" && parseFloat(data.threshold) - 0.1 < loadCellValue)
+            || (data.pullingDirection === "down" && parseFloat(data.threshold) + 0.1 > loadCellValue)) {
+            //if (parseFloat(data.threshold) - 0.1 < loadCellValue) {
             port.write(s_PAUSE, (err) => {
                 if (err) {
                     return console.log('Error on write: ', err.message);
@@ -561,7 +576,7 @@ function handleReceivedData(receivedData, port) {
         }
 
 
-        
+
         ////////////////DONE
         //TODO: code to detect breaking of an sample
         //TODO: epsilon && scale calibration check  
