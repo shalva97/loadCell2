@@ -82,7 +82,7 @@ let data = {
     controllingDCMotorManually: false,
     settings: [true, true, true], //loadcell/time epsilon/time loadcell/epsilon
     fileSaveDir: "./data/",
-    sampleArea: 1.6,
+    sampleArea: 0.16,
     helpToFilterEverySecondData: false,
     chartDataLengthLimit: 5400,
     epsilonFilter: 0.0,
@@ -90,7 +90,8 @@ let data = {
     kgFilter: 0,
     lcv: [0, 0, 0, 0],//shift register for input data, to filter out spikes
     epv: [0, 0, 0, 0], //shift register for input data, to filter out spikes
-    max_allowed_kg: 20,
+    max_allowed_kg: 21,
+    min_allowed_kg: 0,
     max_stress_on_scale: -2,
     max_allowed_stretch: 5,
     breakKgTreshold: 1,
@@ -459,9 +460,9 @@ let epsilonTime = Highcharts.chart('epsilonTime', {
 
 function myEpicTickPositioner() {
     let tickIntervals = []
-    let max = this.dataMax + 4
-    let incrementBy = max > 12 ? 2 : 1
-    for (let i = 0; i < this.dataMax + 2; i += incrementBy) {
+    let max = this.dataMax + 10
+    let incrementBy = 10
+    for (let i = 0; i < this.dataMax + 10; i += incrementBy) {
         tickIntervals.push(i)
     }
     return tickIntervals;
